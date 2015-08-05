@@ -51,6 +51,22 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $email = $trigger['email'];
     $time = date('YmdHis', $trigger['time']);
     $mailingId = CRM_Utils_Array::value('customcampaign', $trigger); //CiviCRM mailling ID
+CRM_Core_Error::debug("MAILJET EVENT", $trigger, true, false);
+
+    if(substr($mailingId,0,5)==="TRANS"){
+      if ($event !== "bounce") {
+        return;
+      }
+      $emailResult = civicrm_api3('Email', 'get', array('email' => $email,'sequential'=>1));
+      if(isset($emailResult['values']) && !empty($emailResult['values'])){
+        //we always get the first result
+        $contactId = $emailResult['values'][0]['contact_id'];
+        $emailId = $emailResult['values'][0]['id'];
+        civicrm_api3('Email', 'create', array('id'=>$emailResult['values'][0]['id'],'on_hold'=>true));
+        return;
+      }
+    }
+
     if($mailingId){ //we only process if mailing_id exist - marketing email
       $mailjetCampaignId = CRM_Utils_Array::value('mj_campaign_id', $trigger);
       $mailjetContactId = CRM_Utils_Array::value('mj_contact_id' , $trigger);
@@ -73,7 +89,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         return;
       }
 
-      $emailResult = civicrm_api3('Email', 'get', array('email' => $email));
+      $emailResult = civicrm_api3('Email', 'get', array('email' => $email,'sequential'=>1));
       if(isset($emailResult['values']) && !empty($emailResult['values'])){
         //we always get the first result
         $contactId = $emailResult['values'][0]['contact_id'];
