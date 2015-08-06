@@ -35,7 +35,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     if (empty($post)) {
       header('HTTP/1.1 421 No Event');
       echo "Needs to be called by mailjet";
-      CRM_Core_Error::debug_var('TP 1', "Needs to be called by mailjet", true, true);
+      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Needs to be called by mailjet", true, true);
       return;
     }
 
@@ -45,7 +45,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     //No Informations sent with the Event
     if (!is_array($trigger) || !isset($trigger['event'])) {
       header('HTTP/1.1 422 Not ok');
-      CRM_Core_Error::debug_var('TP 1', "HTTP/1.1 422 Not ok", true, true);
+      CRM_Core_Error::debug_var("ENDPOINT EVENT", "HTTP/1.1 422 Not ok", true, true);
       return;
     }
 
