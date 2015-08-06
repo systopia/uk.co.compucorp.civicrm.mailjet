@@ -5,20 +5,13 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
 
   static function getMailjetCustomCampaignId($jobId) {
   	if ($jobId !== null) {
-  	  //get the mailing job
           $mailingJob = civicrm_api3('MailingJob', 'get', $params = array('id' => $jobId));
-          $jobType = $mailingJob['values'][$jobId]['job_type'];
-	  if ($jobType == 'child'){
-	   // $jobType = $mailingJob['values'][$jobId]['job_type'];
-		//if job is not test
-	    //if($jobType == 'child'){
+	  if ($mailingJob['values'][$jobId]['job_type'] == 'child'){
             $timestamp = strtotime($mailingJob['values'][$jobId]['scheduled_date']);
             return $jobId . 'MJ' . $timestamp;
-	    //}
 	  }
 	}
-	$timestamp = strtotime("now");
-	return 0 . 'MJ' . $timestamp;
+	return 0 . 'MJ' . strtotime("now");
   }
 
   static function recordBounce($params) {
@@ -26,7 +19,7 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
     $mailingId = CRM_Utils_Array::value('mailing_id', $params); //CiviCRM mailling ID
     $contactId = CRM_Utils_Array::value('contact_id' , $params);
     $emailId =  CRM_Utils_Array::value('email_id' , $params);
-	$email = CRM_Utils_Array::value('email' , $params);
+    $email = CRM_Utils_Array::value('email' , $params);
     $jobId = CRM_Utils_Array::value('job_id' , $params);
     $eqParams = array(
       'job_id' => $jobId,
