@@ -74,6 +74,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     }
 
     if ($mailingId) { //we only process if mailing_id exist - marketing email
+      CRM_Core_Error::debug_var("MAILJET TRIGGER", "A ".$mailingId, true, true);
       $mailjetCampaignId = CRM_Utils_Array::value('mj_campaign_id', $trigger);
       $mailjetContactId = CRM_Utils_Array::value('mj_contact_id' , $trigger);
 
@@ -94,11 +95,15 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         return;
       }
 
+      CRM_Core_Error::debug_var("MAILJET TRIGGER", "B email: ".$email, true, true);
+
       $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
         //we always get the first result
         $contactId = $emailResult['values'][0]['contact_id'];
         $emailId = $emailResult['values'][0]['id'];
+        CRM_Core_Error::debug_var("MAILJET TRIGGER", "C ".$contactId, true, true);
+        CRM_Core_Error::debug_var("MAILJET TRIGGER", "D ".$emailId, true, true);
         $params = array(
           'mailing_id' => $mailingId,
           'contact_id' => $contactId,
@@ -119,24 +124,29 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           case 'bounce':
           case 'spam':
           case 'blocked':
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "E ".$trigger['event'], true, true);
             $params['hard_bounce'] =  CRM_Utils_Array::value('hard_bounce', $trigger);
             $params['blocked'] = CRM_Utils_Array::value('blocked', $trigger);
             $params['source'] = CRM_Utils_Array::value('source', $trigger);
             $params['error_related_to'] =  CRM_Utils_Array::value('error_related_to', $trigger);
             $params['error'] =   CRM_Utils_Array::value('error', $trigger);
-            $job_id = exclude('MJ', $mailingId); // $mailingId is not exactly ID, this is CustomValue!
+            $job_id = explode('MJ', $mailingId); // $mailingId is not exactly ID, this is CustomValue!
             $params['job_id'] = (int) $job_id[0];
+            $params['email'] = $email;
             if (!empty($params['source'])) {
               $params['is_spam'] = TRUE;
             } else {
               $params['is_spam'] = FALSE;
             }
+            CRM_Core_Error::debug_var("MAILJET TRIGGER E1", $params, true, true);
             CRM_Mailjet_BAO_Event::recordBounce($params);
             //TODO: handle error
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "F ".$params['job_id'], true, true);
             break;
           # No handler
           default:
             header('HTTP/1.1 423 No handler');
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "HTTP/1.1 423 No handler ", true, true);
             // Log if there is no handler
             break;
         }

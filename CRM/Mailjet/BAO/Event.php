@@ -4,14 +4,14 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
 
 
   static function getMailjetCustomCampaignId($jobId) {
-  	if ($jobId !== null) {
-          $mailingJob = civicrm_api3('MailingJob', 'get', $params = array('id' => $jobId));
-	  if ($mailingJob['values'][$jobId]['job_type'] == 'child'){
-            $timestamp = strtotime($mailingJob['values'][$jobId]['scheduled_date']);
-            return $jobId . 'MJ' . $timestamp;
-	  }
-	}
-	return 0 . 'MJ' . strtotime("now");
+    if ($jobId !== null) {
+      $mailingJob = civicrm_api3('MailingJob', 'get', $params = array('id' => $jobId));
+      if ($mailingJob['values'][$jobId]['job_type'] == 'child'){
+        $timestamp = strtotime($mailingJob['values'][$jobId]['scheduled_date']);
+        return $jobId . 'MJ' . $timestamp;
+      }
+    }
+    return 0 . 'MJ' . strtotime("now");
   }
 
   static function recordBounce($params) {
@@ -30,26 +30,26 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
     $time =  date('YmdHis', CRM_Utils_Array::value('date_ts', $params));
     $bounceType = array();
     CRM_Core_PseudoConstant::populate($bounceType, 'CRM_Mailing_DAO_BounceType', TRUE, 'id', NULL, NULL, NULL, 'name');
-    $bounce  = new CRM_Mailing_Event_BAO_Bounce();
+    $bounce = new CRM_Mailing_Event_BAO_Bounce();
     $bounce->time_stamp = $time;
     $bounce->event_queue_id = $eventQueue->id;
-    if($isSpam){
+    if ($isSpam) {
       $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::SPAM];
       $bounce->bounce_reason = CRM_Utils_Array::value('source', $params); //bounce reason when spam occured
-    }else{
-     $hardBounce = CRM_Utils_Array::value('hard_bounce', $params);
-     $blocked = CRM_Utils_Array::value('blocked', $params); //  blocked : true if this bounce leads to recipient being blocked
-      if($hardBounce && $blocked){
+    } else {
+      $hardBounce = CRM_Utils_Array::value('hard_bounce', $params);
+      $blocked = CRM_Utils_Array::value('blocked', $params); //  blocked : true if this bounce leads to recipient being blocked
+      if ($hardBounce && $blocked) {
         $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::BLOCKED];
-      }else if($hardBounce && !$blocked){
+      } elseif ($hardBounce && !$blocked){
         $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::HARD_BOUNCE];
-      }else{
+      } else {
         $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE];
       }
       $bounce->bounce_reason  =  $params['error_related_to'] . " - " . $params['error'];
     }
-     $bounce->save();
-     if($bounce->bounce_type_id == $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE]){
+    $bounce->save();
+    if ($bounce->bounce_type_id == $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE]) {
       //put the email into on hold
       $params = array(
         'id' => $emailId,
@@ -58,13 +58,13 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
         'hold_date' =>  $time,
       );
       civicrm_api3('Email', 'create', $params);
-      }else {
-        $params = array(
-          'id' => $contactId,
-          'do_not_email' => 1,
-        );
-        civicrm_api3('Contact', 'create', $params);
-      }
+    } else {
+       $params = array(
+         'id' => $contactId,
+         'do_not_email' => 1,
+       );
+       civicrm_api3('Contact', 'create', $params);
+    }
     return TRUE;
   }
 }
