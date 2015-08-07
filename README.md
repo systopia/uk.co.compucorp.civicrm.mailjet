@@ -7,7 +7,7 @@ This extension allows to automatically update the number of bounces for civimail
 Thanks to [WeMove.EU](https://www.wemove.eu) contribution, this extension also flags transactional emails (eg. automatic emails sent to confirm a donation or event registration, request to confirm their subscriptions...). In order to do that, it automatically create a fake campaign on mailjet with the sender email as its name.
 
 
-##setup for jetmail
+##setup for mailjet
 you do not need that extension to send emails, simply use mailjet smtp interface (using the api key as login and secret as password, as explained on their site)
 
 You should be able to send emails and see on mailjet site how many were sent.
@@ -25,5 +25,9 @@ Do not trigger events for open and click if you expect to handle any big mailinn
 >define( 'MAILJET_API_KEY', 'YOUR MAILJET API KEY');<br/>
 >define( 'MAILJET_SECRET_KEY', 'YOUR MAILJET SECRET KEY');
 
+#TODO (PR welcome)
+the latest version of mailjet API allows to group events, instead of calling the endpoint for every event. This shouldn't be too hard to implement and would make me very happy if you contribute that part.
 
+Verifying who is calling the endpoint could be better done...
 
+X+
