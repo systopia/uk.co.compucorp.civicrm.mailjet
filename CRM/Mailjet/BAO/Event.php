@@ -29,15 +29,15 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
     $time =  date('YmdHis', CRM_Utils_Array::value('date_ts', $params));
     $bounceType = array();
     CRM_Core_PseudoConstant::populate($bounceType, 'CRM_Mailing_DAO_BounceType', TRUE, 'id', NULL, NULL, NULL, 'name');
-    $bounce  = new CRM_Mailing_Event_BAO_Bounce();
+    $bounce = new CRM_Mailing_Event_BAO_Bounce();
     $bounce->time_stamp = $time;
     $bounce->event_queue_id = $eventQueue->id;
     if ($isSpam) {
       $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::SPAM];
       $bounce->bounce_reason = CRM_Utils_Array::value('source', $params); //bounce reason when spam occured
     } else {
-     $hardBounce = CRM_Utils_Array::value('hard_bounce', $params);
-     $blocked = CRM_Utils_Array::value('blocked', $params); //  blocked : true if this bounce leads to recipient being blocked
+      $hardBounce = CRM_Utils_Array::value('hard_bounce', $params);
+      $blocked = CRM_Utils_Array::value('blocked', $params); //  blocked : true if this bounce leads to recipient being blocked
       if ($hardBounce && $blocked) {
         $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::BLOCKED];
       } elseif ($hardBounce && !$blocked){

@@ -124,8 +124,9 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             $params['source'] = CRM_Utils_Array::value('source', $trigger);
             $params['error_related_to'] =  CRM_Utils_Array::value('error_related_to', $trigger);
             $params['error'] =   CRM_Utils_Array::value('error', $trigger);
-            $job_id = exclude('MJ', $mailingId); // $mailingId is not exactly ID, this is CustomValue!
+            $job_id = explode('MJ', $mailingId); // $mailingId is not exactly ID, this is CustomValue!
             $params['job_id'] = (int) $job_id[0];
+            $params['email'] = $email;
             if (!empty($params['source'])) {
               $params['is_spam'] = TRUE;
             } else {
@@ -137,7 +138,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           # No handler
           default:
             header('HTTP/1.1 423 No handler');
-            // Log if there is no handler
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "HTTP/1.1 423 No handler ", true, true);
             break;
         }
         header('HTTP/1.1 200 Ok');
