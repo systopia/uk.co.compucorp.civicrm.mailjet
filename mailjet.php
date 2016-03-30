@@ -28,7 +28,17 @@ function mailjet_civicrm_pageRun(&$page) {
     $mailingId = $page->_mailing_id;
     $mailingJobs = civicrm_api3('MailingJob', 'get', $params = array('mailing_id' => $mailingId));
 
-    $jobId = 0;
+    $stats = array(
+      'BlockedCount' => 0,
+      'BouncedCount' => 0,
+      'ClickedCount' => 0,
+      'DeliveredCount' => 0,
+      'OpenedCount' => 0,
+      'ProcessedCount' => 0,
+      'QueuedCount' => 0,
+      'SpamComplaintCount' => 0,
+      'UnsubscribedCount' => 0,
+    );
     foreach ($mailingJobs['values'] as $key => $job) {
       if ($job['job_type'] == 'child') {
         $jobId = $key;
@@ -52,13 +62,13 @@ function mailjet_civicrm_pageRun(&$page) {
             );
             $response = $mj->campaignstatistics($mailJetParams);
             if ($response->Count == 1) {
-              $stats = $response->Data[0];
-              $page->assign('mailjet_stats', get_object_vars($stats));
+              $stats = sumUpStats($stats, get_object_vars($response->Data[0]));
             }
           }
         }
       }
     }
+    $page->assign('mailjet_stats', $stats);
     CRM_Core_Region::instance('page-header')->add(array(
       'template' => 'CRM/Mailjet/Page/Report.tpl',
     ));
@@ -133,4 +143,25 @@ function mailjet_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
  */
 function mailjet_civicrm_managed(&$entities) {
   return _mailjet_civix_civicrm_managed($entities);
+}
+
+
+function sumUpStats($base, $newStats) {
+  $keys = array(
+    'BlockedCount',
+    'BouncedCount',
+    'ClickedCount',
+    'DeliveredCount',
+    'OpenedCount',
+    'ProcessedCount',
+    'QueuedCount',
+    'SpamComplaintCount',
+    'UnsubscribedCount',
+  );
+  foreach ($keys as $key) {
+    if (array_key_exists($key, $base) && array_key_exists($key, $newStats)) {
+      $base[$key] += $newStats[$key];
+    }
+  }
+  return $base;
 }
