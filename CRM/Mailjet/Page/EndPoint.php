@@ -55,7 +55,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $mailingId = CRM_Utils_Array::value('customcampaign', $trigger); //CiviCRM mailling ID
 
     CRM_Core_Error::debug_var("MAILJET TRIGGER", $trigger, true, true);
-    if (substr($mailingId, 0, 5) === "TRANS") {
+    if (substr($mailingId, 0, 5) === "TRANS" || substr($mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
       CRM_Core_Error::debug_var("TRANS EMAIL", array($mailingId, $event, $email), true, true);
       if (!in_array($event, array("bounce", "blocked"))) {
         return;
