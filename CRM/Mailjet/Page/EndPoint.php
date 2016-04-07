@@ -77,7 +77,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           'activity_date_time' => $time,
           'status_id' => 'Completed',
           'subject' => $event,
-          'details' => 'Added by mailjet extension, error: '.$trigger['error_related_to'].', '.$trigger['error'],
+          'details' => 'Added by mailjet extension, error: '.$trigger['error_related_to'].', '.$trigger['error'].'. blocked='.(int)$trigger['blocked'].'. hard_bounce='.(int)$trigger['hard_bounce'],
           'source_contact_id' => $contactId,
         );
         civicrm_api3('Activity', 'create', $params);
