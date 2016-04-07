@@ -57,19 +57,30 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     CRM_Core_Error::debug_var("MAILJET TRIGGER", $trigger, true, true);
     if (substr($mailingId, 0, 5) === "TRANS" || substr($mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
       CRM_Core_Error::debug_var("TRANS EMAIL", array($mailingId, $event, $email), true, true);
-      if (!in_array($event, array("bounce", "blocked"))) {
-        return;
-      }
+//      if (!in_array($event, array("bounce", "blocked"))) {
+//        return;
+//      }
       $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
         //we always get the first result
-        $emailId = $emailResult['values'][0]['id'];
-        civicrm_api3('Email', 'create', array(
-          'id' => $emailId,
-          'email' => $email,
-          'on_hold' => true,
-          'hold_date' => date('Y-m-d H:i:s'),
-        ));
+//        $emailId = $emailResult['values'][0]['id'];
+//        civicrm_api3('Email', 'create', array(
+//          'id' => $emailId,
+//          'email' => $email,
+//          'on_hold' => true,
+//          'hold_date' => date('Y-m-d H:i:s'),
+//        ));
+        $contactId = $emailResult['values'][0]['contact_id'];
+        $params = array(
+          'sequential' => 1,
+          'activity_type_id' => 58,
+          'activity_date_time' => $time,
+          'status_id' => 'Completed',
+          'subject' => $event,
+          'details' => 'Added by mailjet extension, error: '.$trigger['error_related_to'].', '.$trigger['error'],
+          'source_contact_id' => $contactId,
+        );
+        civicrm_api3('Activity', 'create', $params);
         return;
       }
     }
