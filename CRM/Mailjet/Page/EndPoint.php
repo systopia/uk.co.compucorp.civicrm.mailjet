@@ -67,7 +67,8 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         civicrm_api3('Email', 'create', array(
           'id' => $emailId,
           'email' => $email,
-          'on_hold' => true
+          'on_hold' => true,
+          'hold_date' => date('Y-m-d H:i:s'),
         ));
         return;
       }
