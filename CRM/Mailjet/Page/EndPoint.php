@@ -81,6 +81,22 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           'source_contact_id' => $contactId,
         );
         civicrm_api3('Activity', 'create', $params);
+
+        if ($event == 'unsub') {
+          $sql = "UPDATE civicrm_email SET on_hold = %3, hold_date = %1 WHERE  email = %2";
+          $sqlParams = array(
+            1 => array(date('YmdHis'), 'Timestamp'),
+            2 => array($email, 'String'),
+            3 => array(2, 'Integer'),
+          );
+          CRM_Core_DAO::executeQuery($sql, $sqlParams);
+          $params = array(
+            'sequential' => 1,
+            'id' => $contactId,
+            'is_opt_out' => 1,
+          );
+          civicrm_api3('Contact', 'create', $params);
+        }
         return;
       }
     }
