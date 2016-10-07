@@ -7,20 +7,21 @@ require_once 'mailjet.civix.php';
  * To add Mailjet headers in mail
  */
 function mailjet_civicrm_alterMailParams(&$params, $context) {
-  $jobId = CRM_Utils_Array::value('job_id', $params); //CiviCRM job ID
+  $paramsLower = array_change_key_case($params, CASE_LOWER);
+  $jobId = CRM_Utils_Array::value('job_id', $paramsLower); //CiviCRM job ID
   if (isset($jobId)) {
     $query = "SELECT is_test FROM civicrm_mailing_job WHERE id = 1";
     $is_test = CRM_Core_DAO::singleValueQuery($query);
     if ($is_test) {
       // fixme remember that keys have lower or upper case syntax
-      $params['headers']['X-Mailjet-Campaign'] = "TRANS-".$params["From"];
+      $params['headers']['X-Mailjet-Campaign'] = "TRANS-".$paramsLower["from"];
       $params['headers']['X-Mailjet-CustomValue'] = "TRANS-".time(); // CustomValue have to be unique
     } else {
       $params['headers']['X-Mailjet-Campaign'] = CRM_Mailjet_BAO_Event::getMailjetCustomCampaignId($jobId);
       $params['headers']['X-Mailjet-CustomValue'] = CRM_Mailjet_BAO_Event::getMailjetCustomCampaignId($jobId);
     }
   } else {
-    $params['headers']['X-Mailjet-Campaign'] = "TRANS-".$params["from"];
+    $params['headers']['X-Mailjet-Campaign'] = "TRANS-".$paramsLower["from"];
     $params['headers']['X-Mailjet-CustomValue'] = "TRANS-".time(); // CustomValue have to be unique
   }
 }
