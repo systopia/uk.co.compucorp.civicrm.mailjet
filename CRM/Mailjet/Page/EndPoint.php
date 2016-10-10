@@ -30,7 +30,6 @@ require_once 'CRM/Core/Page.php';
 class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
 
   function run() {
-
     $post = trim(file_get_contents('php://input'));
     if (empty($post)) {
       header('HTTP/1.1 421 No Event');
@@ -39,14 +38,20 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       return;
     }
 
+    $httpHeader = CRM_Mailjet_Page_EndPoint::processMessage($post);
+    header($httpHeader);
+    CRM_Utils_System::civiExit();
+  }
+
+  function processMessage($msg) {
+
     //Decode Trigger Informations
-    $trigger = json_decode($post, true);
+    $trigger = json_decode($msg, true);
 
     //No Informations sent with the Event
     if (!is_array($trigger) || !isset($trigger['event'])) {
-      header('HTTP/1.1 422 Not ok');
-      CRM_Core_Error::debug_var("ENDPOINT EVENT", "HTTP/1.1 422 Not ok", true, true);
-      return;
+      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Invalid JSON or no event", true, true);
+      return 'HTTP/1.1 422 Not ok';
     }
 
     $event = trim($trigger['event']);
@@ -57,6 +62,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     CRM_Core_Error::debug_var("MAILJET TRIGGER", $trigger, true, true);
     if (substr($mailingId, 0, 5) === "TRANS" || substr($mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
       CRM_Core_Error::debug_var("TRANS EMAIL", array($mailingId, $event, $email), true, true);
+
       $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
         if ($event == 'bounce' && $trigger['hard_bounce']) {
@@ -68,8 +74,8 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             'on_hold' => true,
             'hold_date' => date('Y-m-d H:i:s'),
           ));  
-        }
-        
+	}
+
         $contactId = $emailResult['values'][0]['contact_id'];
         $params = array(
           'sequential' => 1,
@@ -97,7 +103,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           );
           civicrm_api3('Contact', 'create', $params);
         }
-        return;
+        return 'HTTP/1.1 200 Ok';
       }
     }
 
@@ -119,7 +125,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       if ($event == 'typofix') {
         //we do not handle typofix
         // TODO:: notifiy admin
-        return;
+        return 'HTTP/1.1 200 Ok';
       }
 
       $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
@@ -138,6 +144,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         *  - please check https://www.mailjet.com/docs/event_tracking for further informations.
         */
         switch ($trigger['event']) {
+	  case 'sent':
           case 'open':
           case 'click':
           case 'unsub':
@@ -165,16 +172,15 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             break;
           # No handler
           default:
-            header('HTTP/1.1 423 No handler');
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "HTTP/1.1 423 No handler ", true, true);
-            break;
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler ", true, true);
+            return 'HTTP/1.1 423 No handler';
         }
-        header('HTTP/1.1 200 Ok');
+        return 'HTTP/1.1 200 Ok';
       }
     } else { //assumed if there is not mailing_id, this should be a transaction email
       //TODO::process a transaction email
+      return 'HTTP/1.1 200 Ok';
     }
-    CRM_Utils_System::civiExit();
   }
 
 }
