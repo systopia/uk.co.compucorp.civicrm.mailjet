@@ -21,9 +21,9 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 
 const MJ_MAX_LOAD = 2;
-const MJ_LOAD_CHECK_FREQ = 20;
+const MJ_LOAD_CHECK_FREQ = 100;
 
-$msg_since_check = MJ_LOAD_CHECK_FREQ;
+$msg_since_check = 0;
 $arguments = getopt('q:');
 $queue_name = $arguments['q'];
 
@@ -39,20 +39,28 @@ $callback = function($msg) {
   $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
   $msg_since_check++;
 };
-$channel->basic_consume($queue_name, '', false, false, false, false, $callback);
 
 echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
-while(count($channel->callbacks)) {
-  if ($msg_since_check >= MJ_LOAD_CHECK_FREQ) {
-    $load = sys_getloadavg()[0];
-    if ($load > MJ_MAX_LOAD) {
-      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Current load greater than ".MJ_MAX_LOAD.", suspending polling...\n", true, true);
-      sleep(5);
-      continue;
-    } else {
-      $msg_since_check = 0;
+while (true) {
+  while (count($channel->callbacks)) {
+    if ($msg_since_check >= MJ_LOAD_CHECK_FREQ) {
+      $load = sys_getloadavg()[0];
+      if ($load > MJ_MAX_LOAD) {
+	$channel->basic_cancel($cb_name);
+	$channel->basic_recover(true);
+      } else {
+	$msg_since_check = 0;
+      }
     }
+    $channel->wait();
   }
-  $channel->wait();
+
+  $load = sys_getloadavg()[0];
+  if ($load > MJ_MAX_LOAD) {
+    CRM_Core_Error::debug_var("ENDPOINT EVENT", "Current load greater than ".MJ_MAX_LOAD.", suspending polling...\n", true, true);
+    sleep(5);
+  } else {
+    $cb_name = $channel->basic_consume($queue_name, '', false, false, false, false, $callback);
+  }
 }
 
