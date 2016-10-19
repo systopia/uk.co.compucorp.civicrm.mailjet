@@ -33,7 +33,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $post = trim(file_get_contents('php://input'));
     if (empty($post)) {
       header('HTTP/1.1 421 No Event');
-      echo "Needs to be called by mailjet";
       CRM_Core_Error::debug_var("ENDPOINT EVENT", "Needs to be called by mailjet", true, true);
       return;
     }

@@ -46,7 +46,7 @@ while(count($channel->callbacks)) {
   if ($msg_since_check >= MJ_LOAD_CHECK_FREQ) {
     $load = sys_getloadavg()[0];
     if ($load > MJ_MAX_LOAD) {
-      echo "Current load greater than ".MJ_MAX_LOAD.", suspending polling...\n";
+      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Current load greater than ".MJ_MAX_LOAD.", suspending polling...\n", true, true);
       sleep(5);
       continue;
     } else {
