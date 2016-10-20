@@ -67,13 +67,14 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         if ($event == 'bounce' && $trigger['hard_bounce']) {
           //we always get the first result
           $emailId = $emailResult['values'][0]['id'];
-          civicrm_api3('Email', 'create', array(
-            'id' => $emailId,
-            'email' => $email,
-            'on_hold' => true,
-            'hold_date' => date('Y-m-d H:i:s'),
-          ));  
-	}
+          $sql = "UPDATE civicrm_email SET on_hold = %2, hold_date = %3 WHERE id = %1";
+          $sqlParams = array(
+            1 => array($emailId, 'Integer'),
+            2 => array(2, 'Integer'),
+            3 => array(date('YmdHis'), 'Timestamp'),
+          );
+          CRM_Core_DAO::executeQuery($sql, $sqlParams);
+        }
 
         $contactId = $emailResult['values'][0]['contact_id'];
         $params = array(
@@ -149,7 +150,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         *  - please check https://www.mailjet.com/docs/event_tracking for further informations.
         */
         switch ($trigger['event']) {
-	  case 'sent':
+          case 'sent':
           case 'open':
           case 'click':
           case 'unsub':
