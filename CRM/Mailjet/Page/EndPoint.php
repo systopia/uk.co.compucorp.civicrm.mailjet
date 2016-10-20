@@ -64,19 +64,21 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
 
       $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
+        //we always get the first result
+        $emailId = $emailResult['values'][0]['id'];
+        $contactId = $emailResult['values'][0]['contact_id'];
+
         if ($event == 'bounce' && $trigger['hard_bounce']) {
-          //we always get the first result
-          $emailId = $emailResult['values'][0]['id'];
-          $sql = "UPDATE civicrm_email SET on_hold = %2, hold_date = %3 WHERE id = %1";
-          $sqlParams = array(
-            1 => array($emailId, 'Integer'),
-            2 => array(2, 'Integer'),
-            3 => array(date('YmdHis'), 'Timestamp'),
+          $params = array(
+            'sequential' => 1,
+            'id' => $emailId,
+            'email' => $email,
+            'on_hold' => 2,
+            'hold_date' => date('YmdHis'),
           );
-          CRM_Core_DAO::executeQuery($sql, $sqlParams);
+          civicrm_api3('Email', 'create', $params);
         }
 
-        $contactId = $emailResult['values'][0]['contact_id'];
         $params = array(
           'sequential' => 1,
           'activity_type_id' => 58, // Bounce
@@ -84,24 +86,25 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           'status_id' => 'Completed',
           'subject' => $event,
           'details' => 'Added by mailjet extension, error: '
-	      .CRM_Utils_Array::value('error_related_to', $trigger).', '
-	      .CRM_Utils_Array::value('error', $trigger)
-	      .'. blocked='
-	      .(int)CRM_Utils_Array::value('blocked', $trigger)
-	      .'. hard_bounce='
-	      .(int)CRM_Utils_Array::value('hard_bounce', $trigger),
+            .CRM_Utils_Array::value('error_related_to', $trigger).', '
+            .CRM_Utils_Array::value('error', $trigger)
+            .'. blocked='
+            .(int)CRM_Utils_Array::value('blocked', $trigger)
+            .'. hard_bounce='
+            .(int)CRM_Utils_Array::value('hard_bounce', $trigger),
           'source_contact_id' => $contactId,
         );
         civicrm_api3('Activity', 'create', $params);
 
         if ($event == 'unsub') {
-          $sql = "UPDATE civicrm_email SET on_hold = %3, hold_date = %1 WHERE  email = %2";
-          $sqlParams = array(
-            1 => array(date('YmdHis'), 'Timestamp'),
-            2 => array($email, 'String'),
-            3 => array(2, 'Integer'),
+          $params = array(
+            'sequential' => 1,
+            'id' => $emailId,
+            'email' => $email,
+            'on_hold' => 2,
+            'hold_date' => date('YmdHis'),
           );
-          CRM_Core_DAO::executeQuery($sql, $sqlParams);
+          civicrm_api3('Email', 'create', $params);
           $params = array(
             'sequential' => 1,
             'id' => $contactId,
