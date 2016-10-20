@@ -34,10 +34,16 @@ $channel = $connection->channel();
 
 $callback = function($msg) {
   global $msg_since_check;
-  $msg_handler = new CRM_Mailjet_Page_EndPoint();
-  $msg_handler->processMessage($msg->body);
-  $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-  $msg_since_check++;
+  try {
+    $msg_handler = new CRM_Mailjet_Page_EndPoint();
+    $msg_handler->processMessage($msg->body);
+    $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+  } catch (Exception $ex) {
+    $msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag']);
+    CRM_Core_Error::debug_var("MAILJET AMQP", $ex, true, true);
+  } finally {
+    $msg_since_check++;
+  }
 };
 
 echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
