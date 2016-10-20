@@ -181,12 +181,11 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler ", true, true);
             return 'HTTP/1.1 423 No handler';
         }
-        return 'HTTP/1.1 200 Ok';
       }
     } else { //assumed if there is not mailing_id, this should be a transaction email
       //TODO::process a transaction email
-      return 'HTTP/1.1 200 Ok';
     }
+    return 'HTTP/1.1 200 Ok';
   }
 
 }
