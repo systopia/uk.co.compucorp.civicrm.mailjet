@@ -40,7 +40,13 @@ To increase the response time to mailjet events, you can send them to an AMQP br
    + MAILJET_AMQP_VHOST
  - From the amqp directory, run `php composer.phar install` (adapt if you have a global composer)
 
+adapt and copy doc/mailjet_amqp.conf into /etc/init/mailjet_amqp.conf
+
 ### Run
+On ubuntu/production:
+service mailjet_amqp start
+
+Manually:
 From the `amqp` directory: `php consumer.php -q name_of_queue`
 The script does not ensure that the queue exists before reading from it.
 The script consumes messages only when the load on the server is lower than MAILJET_MAX_LOAD.

@@ -19,18 +19,24 @@ $civicrm_config = CRM_Core_Config::singleton();
 require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 
+function debug($msg) {
+  echo time(), ': ', $msg, "\n";
+}
 
+const MJ_LOAD_INDEX = 1; // index of the avg [1m,5m,15m]
 const MJ_MAX_LOAD = 2;
 const MJ_LOAD_CHECK_FREQ = 100;
+const MJ_COOLING_PERIOD = 20;
 
 $msg_since_check = 0;
 $arguments = getopt('q:');
 $queue_name = $arguments['q'];
 
-$connection = new AMQPStreamConnection(
+function connect() {
+  return new AMQPStreamConnection(
     CIVICRM_AMQP_HOST, CIVICRM_AMQP_PORT,
     CIVICRM_AMQP_USER, CIVICRM_AMQP_PASSWORD, CIVICRM_AMQP_VHOST);
-$channel = $connection->channel();
+}
 
 $callback = function($msg) {
   global $msg_since_check;
@@ -46,14 +52,18 @@ $callback = function($msg) {
   }
 };
 
-echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
+$connection = connect();
+$channel = $connection->channel();
+debug('Waiting for messages. To exit press CTRL+C...');
 while (true) {
   while (count($channel->callbacks)) {
     if ($msg_since_check >= MJ_LOAD_CHECK_FREQ) {
-      $load = sys_getloadavg()[0];
+      $load = sys_getloadavg()[MJ_LOAD_INDEX];
       if ($load > MJ_MAX_LOAD) {
+	debug('Cancelling subscription...');
 	$channel->basic_cancel($cb_name);
 	$channel->basic_recover(true);
+	continue;
       } else {
 	$msg_since_check = 0;
       }
@@ -61,11 +71,21 @@ while (true) {
     $channel->wait();
   }
 
-  $load = sys_getloadavg()[0];
+  $load = sys_getloadavg()[MJ_LOAD_INDEX];
   if ($load > MJ_MAX_LOAD) {
-    CRM_Core_Error::debug_var("ENDPOINT EVENT", "Current load greater than ".MJ_MAX_LOAD.", suspending polling...\n", true, true);
-    sleep(5);
+    //CRM_Core_Error::debug_var("ENDPOINT EVENT", "Current load greater than ".MJ_MAX_LOAD.", suspending polling...\n", true, true);
+    debug('Suspending polling...');
+    $channel->close();
+    $connection->close();
+    sleep(MJ_COOLING_PERIOD);
   } else {
+    if (!$connection->isConnected()) {
+      debug('Reconnecting...');
+      $connection = connect();
+      $channel = $connection->channel();
+      $channel->basic_qos(null, MJ_LOAD_CHECK_FREQ, null);
+    }
+    debug('Starting subscription...');
     $cb_name = $channel->basic_consume($queue_name, '', false, false, false, false, $callback);
   }
 }

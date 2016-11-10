@@ -58,9 +58,14 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $time = date('YmdHis', $trigger['time']);
     $mailingId = CRM_Utils_Array::value('customcampaign', $trigger); //CiviCRM mailling ID
 
-    CRM_Core_Error::debug_var("MAILJET TRIGGER", $trigger, true, true);
+//PERFORANCE IMPACT, xav    CRM_Core_Error::debug_var("MAILJET TRIGGER", $trigger, true, true);
     if (substr($mailingId, 0, 5) === "TRANS" || substr($mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
-      CRM_Core_Error::debug_var("TRANS EMAIL", array($mailingId, $event, $email), true, true);
+//PERFORANCE IMPACT, xav       CRM_Core_Error::debug_var("TRANS EMAIL", array($mailingId, $event, $email), true, true);
+
+      $allowedEvents = array('bounce', 'blocked', 'spam', 'unsub');
+      if (!in_array($event, $allowedEvents)) {
+        return 'HTTP/1.1 200 Ok';
+      }
 
       $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
@@ -79,8 +84,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           civicrm_api3('Email', 'create', $params);
         }
 
-        $allowedEvents = array('bounce', 'blocked', 'spam', 'unsub');
-        if (in_array($event, $allowedEvents)) {
           $params = array(
             'sequential' => 1,
             'activity_type_id' => 58, // Bounce
@@ -116,7 +119,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           civicrm_api3('Contact', 'create', $params);
         }
         return 'HTTP/1.1 200 Ok';
-      }
     }
 
     if ($mailingId) { //we only process if mailing_id exist - marketing email
