@@ -79,22 +79,25 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           civicrm_api3('Email', 'create', $params);
         }
 
-        $params = array(
-          'sequential' => 1,
-          'activity_type_id' => 58, // Bounce
-          'activity_date_time' => $time,
-          'status_id' => 'Completed',
-          'subject' => $event,
-          'details' => 'Added by mailjet extension, error: '
-            .CRM_Utils_Array::value('error_related_to', $trigger).', '
-            .CRM_Utils_Array::value('error', $trigger)
-            .'. blocked='
-            .(int)CRM_Utils_Array::value('blocked', $trigger)
-            .'. hard_bounce='
-            .(int)CRM_Utils_Array::value('hard_bounce', $trigger),
-          'source_contact_id' => $contactId,
-        );
-        civicrm_api3('Activity', 'create', $params);
+        $allowedEvents = array('bounce', 'blocked', 'spam', 'unsub');
+        if (in_array($event, $allowedEvents)) {
+          $params = array(
+            'sequential' => 1,
+            'activity_type_id' => 58, // Bounce
+            'activity_date_time' => $time,
+            'status_id' => 'Completed',
+            'subject' => $event,
+            'details' => 'Added by mailjet extension, error: '
+              .CRM_Utils_Array::value('error_related_to', $trigger).', '
+              .CRM_Utils_Array::value('error', $trigger)
+              .'. blocked='
+              .(int)CRM_Utils_Array::value('blocked', $trigger)
+              .'. hard_bounce='
+              .(int)CRM_Utils_Array::value('hard_bounce', $trigger),
+            'source_contact_id' => $contactId,
+          );
+          civicrm_api3('Activity', 'create', $params);
+        }
 
         if ($event == 'unsub') {
           $params = array(
