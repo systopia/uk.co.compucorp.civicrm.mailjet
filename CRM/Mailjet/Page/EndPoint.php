@@ -122,78 +122,95 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     }
 
     if ($mailingId) { //we only process if mailing_id exist - marketing email
-      $mailjetCampaignId = CRM_Utils_Array::value('mj_campaign_id', $trigger);
-      $mailjetContactId = CRM_Utils_Array::value('mj_contact_id' , $trigger);
+      /* https://www.mailjet.com/docs/event_tracking for more informations. */
+      switch ($event) {
+	//For unsupported events, we just store them raw
+	case 'open':
+	case 'click':
+	case 'unsub':
+	case 'typofix':
+	  CRM_Mailjet_BAO_Event::createFromPostData($trigger);
+	  return 'HTTP/1.1 200 Ok';
 
-      $mailjetEvent = new CRM_Mailjet_DAO_Event();
-      $mailjetEvent->mailing_id = $mailingId;
-      $mailjetEvent->email = $email;
-      $mailjetEvent->event = $event;
-      $mailjetEvent->mj_campaign_id = $mailjetCampaignId;
-      $mailjetEvent->mj_contact_id = $mailjetContactId;
-      $mailjetEvent->time = $time;
-      $mailjetEvent->data = serialize($trigger);
-      $mailjetEvent->created_date = date('YmdHis');
-      $mailjetEvent->save(); //log event
+	//We replace the civi delivery time with the mailjet one
+	//but keep the civi one for comparison
+	case 'sent':
+	  $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
+	  if (isset($emailResult['values']) && !empty($emailResult['values'])) {
+	    CRM_Mailjet_Page_EndPoint::updateDelivery($trigger, $emailResult);
+	    return 'HTTP/1.1 200 Ok';
+	  }
+	  else {
+	    //This shouldn't happen, let's log the event
+	    CRM_Mailjet_BAO_Event::createFromPostData($trigger);
+	    CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email", true, true);
+	    return  'HTTP/1.1 422 unknown email address';
+	  }
 
-      if ($event == 'typofix') {
-        //we do not handle typofix
-        // TODO:: notifiy admin
-        return 'HTTP/1.1 200 Ok';
-      }
-
-      $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
-      if (isset($emailResult['values']) && !empty($emailResult['values'])) {
-        //we always get the first result
-        $contactId = $emailResult['values'][0]['contact_id'];
-        $emailId = $emailResult['values'][0]['id'];
-        $params = array(
-          'mailing_id' => $mailingId,
-          'contact_id' => $contactId,
-          'email_id' => $emailId,
-          'date_ts' =>  $trigger['time'],
-        );
-        /*
-        *  Event handler
-        *  - please check https://www.mailjet.com/docs/event_tracking for further informations.
-        */
-        switch ($trigger['event']) {
-          case 'sent':
-          case 'open':
-          case 'click':
-          case 'unsub':
-          case 'typofix':
-            break;
-          //we treat bounce, span and blocked as bounce mailing in CiviCRM
-          case 'bounce':
-          case 'spam':
-          case 'blocked':
-            $params['hard_bounce'] =  CRM_Utils_Array::value('hard_bounce', $trigger);
-            $params['blocked'] = CRM_Utils_Array::value('blocked', $trigger);
-            $params['source'] = CRM_Utils_Array::value('source', $trigger);
-            $params['error_related_to'] =  CRM_Utils_Array::value('error_related_to', $trigger);
-            $params['error'] =   CRM_Utils_Array::value('error', $trigger);
-            $job_id = explode('MJ', $mailingId); // $mailingId is not exactly ID, this is CustomValue!
-            $params['job_id'] = (int) $job_id[0];
-            $params['email'] = $email;
-            if (!empty($params['source'])) {
-              $params['is_spam'] = TRUE;
-            } else {
-              $params['is_spam'] = FALSE;
-            }
+	//we treat bounce, span and blocked as bounce mailing in CiviCRM
+	case 'bounce':
+	case 'spam':
+	case 'blocked':
+	  $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
+	  if (isset($emailResult['values']) && !empty($emailResult['values'])) {
+	    $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($trigger, $emailResult);
             CRM_Mailjet_BAO_Event::recordBounce($params);
-            //TODO: handle error
-            break;
-          # No handler
-          default:
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler ", true, true);
-            return 'HTTP/1.1 423 No handler';
-        }
+	    return 'HTTP/1.1 200 Ok';
+	  }
+	  else {
+	    //This shouldn't happen, let's log the event
+	    CRM_Mailjet_BAO_Event::createFromPostData($trigger);
+	    CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email", true, true);
+	    return  'HTTP/1.1 422 unknown email address';
+	  }
+	# No handler
+	default:
+	  CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler for $event", true, true);
+	  return 'HTTP/1.1 422 unknown event';
       }
+
     } else { //assumed if there is not mailing_id, this should be a transaction email
       //TODO::process a transaction email
     }
     return 'HTTP/1.1 200 Ok';
+  }
+
+  function updateDelivery($trigger, $emailResult) {
+    $mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
+    $job_id = explode('MJ', $mailingId)[0]; // $mailingId is not exactly ID, this is CustomValue!
+    $email_id = $emailResult['values'][0]['id'];
+    $time = date('YmdHis', CRM_Utils_Array::value('time', $trigger));
+    $query = "UPDATE civicrm_mailing_event_delivered d"
+      . " JOIN civicrm_mailing_event_queue q ON d.event_queue_id=q.id"
+      . " SET d.original_time_stamp=d.time_stamp, d.time_stamp='$time'" 
+      . " WHERE q.job_id=$job_id AND q.email_id=$email_id AND d.original_time_stamp IS NULL";
+    CRM_Core_Error::debug_var("MAILJET TRIGGER", $query, true, true);
+
+    CRM_Core_DAO::executeQuery($query);
+  }
+
+  function prepareBounceParams($trigger, $emailResult) {
+    $mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
+    //we always get the first result
+    $contactId = $emailResult['values'][0]['contact_id'];
+    $emailId = $emailResult['values'][0]['id'];
+    $params = array(
+      'mailing_id' => $mailingId,
+      'contact_id' => $contactId,
+      'email_id' => $emailId,
+      'date_ts' =>  $trigger['time'],
+    );
+    $params['hard_bounce'] =  CRM_Utils_Array::value('hard_bounce', $trigger);
+    $params['blocked'] = CRM_Utils_Array::value('blocked', $trigger);
+    $params['source'] = CRM_Utils_Array::value('source', $trigger);
+    $params['error_related_to'] =  CRM_Utils_Array::value('error_related_to', $trigger);
+    $params['error'] =   CRM_Utils_Array::value('error', $trigger);
+    $job_id = explode('MJ', $mailingId); // $mailingId is not exactly ID, this is CustomValue!
+    $params['job_id'] = (int) $job_id[0];
+    $params['email'] = $email;
+    $params['is_spam'] = !empty($params['source']);
+
+    return $params;
   }
 
 }
