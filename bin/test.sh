@@ -67,6 +67,8 @@ echo -e "\n"
 
 echo " [x] Test: sent"
 echo "This event should update a row from civicrm_mailing_event_delivered"
+echo "A second call with same email and job id shoudl have no effect"
+SENT_OTIME=$(mysql civi_dev -sse "SELECT d.time_stamp FROM civicrm_mailing_event_queue q JOIN civicrm_email e ON e.id=q.email_id JOIN civicrm_mailing_event_delivered d ON d.event_queue_id=q.id WHERE q.job_id=${SENT_JOBID} and e.email='${SENT_EMAIL}'")
 curl $ENDPOINT -d "{
     \"event\":\"sent\",
     \"time\":${SENT_TIME},
@@ -75,16 +77,27 @@ curl $ENDPOINT -d "{
     \"customcampaign\":\"${SENT_JOBID}MJ1476454150\"
   }"
 
-SENT_QUERY="SELECT FROM_UNIXTIME(${SENT_TIME}) AS expected, time_stamp AS actual, original_time_stamp AS original
-  FROM civicrm_mailing_job j JOIN civicrm_mailing_event_queue q ON q.job_id=j.id 
+SENT_QUERY="SELECT FROM_UNIXTIME(${SENT_TIME}) AS expected, time_stamp AS actual, 
+  '${SENT_OTIME}' AS expected_original, original_time_stamp AS actual_original
+  FROM civicrm_mailing_event_queue q 
   JOIN civicrm_email e ON e.id=q.email_id 
   JOIN civicrm_mailing_event_delivered d on d.event_queue_id=q.id 
-  WHERE j.id=${SENT_JOBID} AND e.email='${SENT_EMAIL}'"
+  WHERE q.job_id=${SENT_JOBID} AND e.email='${SENT_EMAIL}'"
 SENT_CANCEL="UPDATE civicrm_mailing_event_delivered
   SET time_stamp=original_time_stamp, original_time_stamp=NULL
   WHERE time_stamp=FROM_UNIXTIME(${SENT_TIME})"
 
-echo "New delivery times"
+echo "New delivery times:"
+mysql $DB -e "$SENT_QUERY"
+
+curl $ENDPOINT -d "{
+    \"event\":\"sent\",
+    \"time\":${SENT_TIME},
+    \"MessageID\":123456789,
+    \"email\":\"${SENT_EMAIL}\",
+    \"customcampaign\":\"${SENT_JOBID}MJ1476454150\"
+  }"
+echo "After a second call:"
 mysql $DB -e "$SENT_QUERY"
 echo -e "\n"
 
