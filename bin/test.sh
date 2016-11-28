@@ -1,7 +1,7 @@
 #!/bin/bash 
 
-ENDPOINT=https://civi-dev.wemove.eu/civicrm/mailjet/event/endpoint
-DB=civi_dev
+ENDPOINT=$1
+DB=$2
 
 # This can be pretty much anything
 TYPOFIX_TIME=$(date +%s)
@@ -10,13 +10,13 @@ TYPOFIX_JOBID=12345
 
 # Put here the details of a mailing and email delivered by CiviCRM
 BOUNCE_TIME=$(date +%s)
-BOUNCE_EMAIL="de@wemove.thouvenin.pro"
-BOUNCE_JOBID=10052
+BOUNCE_EMAIL="no-reply@example.com"
+BOUNCE_JOBID=12345
 
 # Put here the details of a mailing and email delivered by CiviCRM
 SENT_TIME=$(date +%s)
-SENT_EMAIL="es@wemove.thouvenin.pro"
-SENT_JOBID=10052
+SENT_EMAIL="user@example.com"
+SENT_JOBID=12345
 
 
 echo " [x] Test: typofix"
