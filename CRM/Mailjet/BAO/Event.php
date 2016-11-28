@@ -13,6 +13,29 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
     return 0 . 'MJ' . strtotime("now");
   }
 
+  /**
+   * Store a raw event in the mailjet table
+   */
+  static function createFromPostData($trigger) {
+    $mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
+    $email = trim($trigger['email']);
+    $event = trim($trigger['event']);
+    $mailjetCampaignId = CRM_Utils_Array::value('mj_campaign_id', $trigger);
+    $mailjetContactId = CRM_Utils_Array::value('mj_contact_id' , $trigger);
+    $time = date('YmdHis', $trigger['time']);
+
+    $mailjetEvent = new CRM_Mailjet_DAO_Event();
+    $mailjetEvent->mailing_id = $mailingId;
+    $mailjetEvent->email = $email;
+    $mailjetEvent->event = $event;
+    $mailjetEvent->mj_campaign_id = $mailjetCampaignId;
+    $mailjetEvent->mj_contact_id = $mailjetContactId;
+    $mailjetEvent->time = $time;
+    $mailjetEvent->data = serialize($trigger);
+    $mailjetEvent->created_date = date('YmdHis');
+    $mailjetEvent->save(); 
+  }
+
   static function recordBounce($params) {
     $isSpam =  CRM_Utils_Array::value('is_spam', $params);
     $mailingId = CRM_Utils_Array::value('mailing_id', $params); //CiviCRM mailling ID

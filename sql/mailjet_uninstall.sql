@@ -6,3 +6,6 @@ DELETE FROM `civicrm_mailing_bounce_type` WHERE `name` IN ( 'Mailjet Soft Bounce
 ALTER TABLE `civicrm_mailing_bounce_type`
   CHANGE `name` `name` ENUM( 'AOL', 'Away', 'DNS', 'Host', 'Inactive', 'Invalid', 'Loop', 'Quota', 'Relay', 'Spam', 'Syntax', 'Unknown' )
     CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'Type of bounce';
+
+ALTER TABLE civicrm_mailing_event_delivered DROP COLUMN original_time_stamp;
+

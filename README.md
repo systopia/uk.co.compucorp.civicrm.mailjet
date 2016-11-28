@@ -6,6 +6,7 @@ This extension allows to automatically update the number of bounces for civimail
 
 Thanks to [WeMove.EU](https://www.wemove.eu) contribution, this extension also flags transactional emails (eg. automatic emails sent to confirm a donation or event registration, request to confirm their subscriptions...). In order to do that, it automatically create a fake campaign on mailjet with the sender email as its name.
 
+Another major change is that the extension stores received event in its own table only for event types currently not supported, or when something wrong happens. Otherwise, only Civicrm standard tables are used. This applies for `sent ` events, where the extension stores the mailjet send time in place of the civiCRM one, and keeps the CiviCRM one in a new column `original_time_stamp' (created by the install script).
 
 ##setup for mailjet
 you do not need that extension to send emails, simply use mailjet smtp interface (using the api key as login and secret as password, as explained on their site)
