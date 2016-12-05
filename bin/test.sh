@@ -8,6 +8,11 @@ TYPOFIX_TIME=$(date +%s)
 TYPOFIX_EMAIL="typo@gmail.cmo"
 TYPOFIX_JOBID=12345
 
+# Keep the Job ID to 0 (test mail), the email address should exist in DB
+NOJOB_TIME=$(date +%s)
+NOJOB_EMAIL="real@example.com"
+NOJOB_JOBID=0
+
 # Put here the details of a mailing and email delivered by CiviCRM
 BOUNCE_TIME=$(date +%s)
 BOUNCE_EMAIL="no-reply@example.com"
@@ -37,6 +42,25 @@ TYPOFIX_CANCEL="DELETE FROM civicrm_mailing_mailjet_event
 
 echo "Number of rows created in civicrm_mailing_mailjet_event:"
 mysql $DB -e "$TYPOFIX_QUERY"
+echo -e "\n"
+
+
+echo " [x] Test: no mailing job (test mail)"
+echo "This event should complete normally without doing anything"
+curl $ENDPOINT -d "{
+    \"event\":\"bounce\",
+    \"time\":${NOJOB_TIME},
+    \"MessageID\":123456789,
+    \"email\":\"${NOJOB_EMAIL}\",
+    \"customcampaign\":\"${NOJOB_JOBID}MJ1476454150\"
+  }"
+
+NOJOB_QUERY="SELECT 0 AS expected, COUNT(*) AS actual
+  FROM civicrm_mailing_event_bounce 
+  WHERE time_stamp=FROM_UNIXTIME(${NOJOB_TIME})"
+
+echo "Number of created events"
+mysql $DB -e "$NOJOB_QUERY"
 echo -e "\n"
 
 

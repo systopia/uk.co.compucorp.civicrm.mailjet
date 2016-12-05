@@ -121,7 +121,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         return 'HTTP/1.1 200 Ok';
     }
 
-    if ($mailingId) { //we only process if mailing_id exist - marketing email
+    if ($mailingId && $mailingId[0] != '0') { //we only process if mailing_id exist - marketing email
       /* https://www.mailjet.com/docs/event_tracking for more informations. */
       switch ($event) {
 	//For unsupported events, we just store them raw
@@ -207,7 +207,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $params['error'] =   CRM_Utils_Array::value('error', $trigger);
     $job_id = explode('MJ', $mailingId); // $mailingId is not exactly ID, this is CustomValue!
     $params['job_id'] = (int) $job_id[0];
-    $params['email'] = $email;
+    $params['email'] = trim($trigger['email']);
     $params['is_spam'] = !empty($params['source']);
 
     return $params;
