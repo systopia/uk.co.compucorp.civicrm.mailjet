@@ -184,7 +184,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       . " JOIN civicrm_mailing_event_queue q ON d.event_queue_id=q.id"
       . " SET d.original_time_stamp=d.time_stamp, d.time_stamp='$time'" 
       . " WHERE q.job_id=$job_id AND q.email_id=$email_id AND d.original_time_stamp IS NULL";
-    CRM_Core_Error::debug_var("MAILJET TRIGGER", $query, true, true);
 
     CRM_Core_DAO::executeQuery($query);
   }
