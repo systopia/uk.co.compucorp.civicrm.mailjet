@@ -46,7 +46,7 @@ $callback = function($msg) {
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
   } catch (Exception $ex) {
     $msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag']);
-    CRM_Core_Error::debug_var("MAILJET AMQP", $ex, true, true);
+    CRM_Core_Error::debug_var("MAILJET AMQP", CRM_Core_Error::formatTextException($ex), true, true);
   } finally {
     $msg_since_check++;
   }
