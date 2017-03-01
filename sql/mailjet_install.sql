@@ -45,3 +45,19 @@ ALTER TABLE `civicrm_mailing_bounce_type`
 -- This column will receive the civi timestamp, when we receive the mailjet one
 ALTER TABLE civicrm_mailing_event_delivered ADD COLUMN (original_time_stamp DATETIME);
 
+# change logic of mailjet timestamp:
+ALTER TABLE civicrm_mailing_event_delivered ADD COLUMN mailjet_time_stamp DATETIME DEFAULT '1970-01-01' COMMENT 'Datetime of sent event which mailjet endpoint received from mailjet service';
+ALTER TABLE civicrm_mailing_event_delivered ADD INDEX civicrm_mailing_event_delivered_mailjet_time_stamp_inx (mailjet_time_stamp);
+
+-- move mailjet event time to new column mailjet_time_stamp
+# UPDATE civicrm_mailing_event_delivered
+# SET mailjet_time_stamp = time_stamp
+# WHERE original_time_stamp > '1970-01-01';
+
+-- restore original (civicrm) delivered time to column time_stamp
+# UPDATE civicrm_mailing_event_delivered
+# SET time_stamp = original_time_stamp
+# WHERE original_time_stamp > '1970-01-01';
+
+-- remove unnecessary column
+# ALTER TABLE civicrm_mailing_event_delivered DROP COLUMN original_time_stamp;
