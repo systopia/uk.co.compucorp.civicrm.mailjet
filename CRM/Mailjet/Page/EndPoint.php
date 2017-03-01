@@ -180,12 +180,16 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $job_id = explode('MJ', $mailingId)[0]; // $mailingId is not exactly ID, this is CustomValue!
     $email_id = $emailResult['values'][0]['id'];
     $time = date('YmdHis', CRM_Utils_Array::value('time', $trigger));
-    $query = "UPDATE civicrm_mailing_event_delivered d"
-      . " JOIN civicrm_mailing_event_queue q ON d.event_queue_id=q.id"
-      . " SET d.original_time_stamp=d.time_stamp, d.time_stamp='$time'" 
-      . " WHERE q.job_id=$job_id AND q.email_id=$email_id AND d.original_time_stamp = '1970-01-01'";
-
-    CRM_Core_DAO::executeQuery($query);
+    $query = "UPDATE civicrm_mailing_event_delivered d
+              JOIN civicrm_mailing_event_queue q ON d.event_queue_id = q.id
+              SET d.mailjet_time_stamp = %3
+              WHERE q.job_id = %1 AND q.email_id = %2 AND d.mailjet_time_stamp = '1970-01-01'";
+    $params = array(
+      1 => array($job_id, 'Integer'),
+      2 => array($email_id, 'Integer'),
+      3 => array($time, 'String'),
+    );
+    CRM_Core_DAO::executeQuery($query, $params);
   }
 
   function prepareBounceParams($trigger, $emailResult) {
