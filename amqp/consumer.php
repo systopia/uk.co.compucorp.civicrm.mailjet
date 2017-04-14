@@ -45,8 +45,11 @@ $callback = function($msg) {
     $msg_handler->processMessage($msg->body);
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
   } catch (Exception $ex) {
-    $msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag']);
+    $msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag'], false, true);
     CRM_Core_Error::debug_var("MAILJET AMQP", CRM_Core_Error::formatTextException($ex), true, true);
+    
+    //In some cases (e.g. a lost connection), dying and respawning can solve the problem
+    die(1);
   } finally {
     $msg_since_check++;
   }
