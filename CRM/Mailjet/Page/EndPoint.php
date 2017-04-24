@@ -54,7 +54,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     }
 
     $event = trim($trigger['event']);
-    $email = trim($trigger['email']);
+    $email = str_replace('"', '', trim($trigger['email']));
     $time = date('YmdHis', $trigger['time']);
     $mailingId = CRM_Utils_Array::value('customcampaign', $trigger); //CiviCRM mailling ID
 
