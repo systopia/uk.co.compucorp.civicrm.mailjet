@@ -140,7 +140,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           else {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($trigger);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email", true, true);
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email event " . $event, true, true);
             return  'HTTP/1.1 422 unknown email address';
           }
 
@@ -157,7 +157,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           else {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($trigger);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email", true, true);
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email event " . $event, true, true);
             return  'HTTP/1.1 422 unknown email address';
           }
         # No handler
