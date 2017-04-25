@@ -77,12 +77,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
 
       if ($event == 'unsub') {
         $this->setOnHoldHard($emailId, $email);
-        $params = array(
-          'sequential' => 1,
-          'id' => $contactId,
-          'is_opt_out' => 1,
-        );
-        civicrm_api3('Contact', 'create', $params);
+        $this->setOptOut($contactId);
       }
       return 'HTTP/1.1 200 Ok';
     }
@@ -190,6 +185,15 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       'hold_date' => date('YmdHis'),
     );
     civicrm_api3('Email', 'create', $params);
+  }
+
+  function setOptOut($contactId) {
+    $params = array(
+      'sequential' => 1,
+      'id' => $contactId,
+      'is_opt_out' => 1,
+    );
+    civicrm_api3('Contact', 'create', $params);
   }
 
   function createBounceActivity($trigger, $contactId) {
