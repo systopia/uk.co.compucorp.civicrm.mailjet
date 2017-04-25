@@ -55,7 +55,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
 
     $event = trim($trigger['event']);
     $email = str_replace('"', '', trim($trigger['email']));
-    $time = date('YmdHis', $trigger['time']);
     $mailingId = CRM_Utils_Array::value('customcampaign', $trigger); //CiviCRM mailling ID
 
     if (substr($mailingId, 0, 5) === "TRANS" || substr($mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
@@ -80,23 +79,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           );
           civicrm_api3('Email', 'create', $params);
         }
-
-        $params = array(
-          'sequential' => 1,
-          'activity_type_id' => 58, // Bounce
-          'activity_date_time' => $time,
-          'status_id' => 'Completed',
-          'subject' => $event,
-          'details' => 'Added by mailjet extension, error: '
-            .CRM_Utils_Array::value('error_related_to', $trigger).', '
-            .CRM_Utils_Array::value('error', $trigger)
-            .'. blocked='
-            .(int)CRM_Utils_Array::value('blocked', $trigger)
-            .'. hard_bounce='
-            .(int)CRM_Utils_Array::value('hard_bounce', $trigger),
-          'source_contact_id' => $contactId,
-        );
-        civicrm_api3('Activity', 'create', $params);
+        $this->createBounceActivity($trigger, $contactId);
       }
 
       if ($event == 'unsub') {
@@ -210,5 +193,32 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $params['is_spam'] = !empty($params['source']);
 
     return $params;
+  }
+
+  function createBounceActivity($trigger, $contactId) {
+    $event = trim(CRM_Utils_Array::value('event', $trigger));
+    $time = date('YmdHis', CRM_Utils_Array::value('time', $trigger));
+    $params = array(
+      'sequential' => 1,
+      'activity_type_id' => 58, // Bounce
+      'activity_date_time' => $time,
+      'status_id' => 'Completed',
+      'subject' => $event,
+      'details' => $this->prepareDetails($trigger),
+      'source_contact_id' => $contactId,
+    );
+    civicrm_api3('Activity', 'create', $params);
+  }
+
+  function prepareDetails($trigger) {
+    return  'Added by mailjet extension, error: '
+      . CRM_Utils_Array::value('error_related_to', $trigger)
+      . ', '
+      . CRM_Utils_Array::value('error', $trigger)
+      . '. blocked='
+      . (int)CRM_Utils_Array::value('blocked', $trigger)
+      . '. hard_bounce='
+      . (int)CRM_Utils_Array::value('hard_bounce', $trigger)
+      . ', json=' . json_encode($trigger);
   }
 }
