@@ -70,27 +70,13 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         $contactId = $emailResult['values'][0]['contact_id'];
 
         if ($event == 'bounce' && $trigger['hard_bounce']) {
-          $params = array(
-            'sequential' => 1,
-            'id' => $emailId,
-            'email' => $email,
-            'on_hold' => 2,
-            'hold_date' => date('YmdHis'),
-          );
-          civicrm_api3('Email', 'create', $params);
+          $this->setOnHoldHard($emailId, $email);
         }
         $this->createBounceActivity($trigger, $contactId);
       }
 
       if ($event == 'unsub') {
-        $params = array(
-          'sequential' => 1,
-          'id' => $emailId,
-          'email' => $email,
-          'on_hold' => 2,
-          'hold_date' => date('YmdHis'),
-        );
-        civicrm_api3('Email', 'create', $params);
+        $this->setOnHoldHard($emailId, $email);
         $params = array(
           'sequential' => 1,
           'id' => $contactId,
@@ -193,6 +179,17 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $params['is_spam'] = !empty($params['source']);
 
     return $params;
+  }
+
+  function setOnHoldHard($emailId, $email) {
+    $params = array(
+      'sequential' => 1,
+      'id' => $emailId,
+      'email' => $email,
+      'on_hold' => 2,
+      'hold_date' => date('YmdHis'),
+    );
+    civicrm_api3('Email', 'create', $params);
   }
 
   function createBounceActivity($trigger, $contactId) {
