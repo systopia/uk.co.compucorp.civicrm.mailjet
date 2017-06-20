@@ -1,3 +1,4 @@
 bin/setup.conf
+bin/test_data.sh
 .DS_Store
 .project
