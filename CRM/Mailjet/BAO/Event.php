@@ -66,7 +66,11 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
       } elseif ($hardBounce && !$blocked){
         $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::HARD_BOUNCE];
       } else {
-        $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE];
+        if (self::isHardError($params)) {
+          $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::HARD_BOUNCE];
+        } else {
+          $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE];
+        }
       }
       $bounce->bounce_reason  =  $params['error_related_to'] . " - " . $params['error'];
     }
@@ -79,5 +83,22 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
       civicrm_api3('Contact', 'create', $params);
     }
     return TRUE;
+  }
+
+  /**
+   * Check if error should be hard bounce.
+   *
+   * @param $params
+   *
+   * @return bool
+   */
+  private static function isHardError($params) {
+    $error = CRM_Utils_Array::value('error', $params);
+    $hardErrors = [
+      'invalid domain',
+      'relay/access denied',
+      'typofix',
+    ];
+    return in_array($error, $hardErrors);
   }
 }
