@@ -21,10 +21,10 @@ class CRM_Mailjet_Logic_Message {
     $this->event = trim(CRM_Utils_Array::value('event', $trigger));
     $this->email = str_replace('"', '', trim(CRM_Utils_Array::value('email', $trigger)));
     $this->mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
-    $this->job_id = explode('MJ', $this->mailingId)[0];
+    $this->job_id = (int)explode('MJ', $this->mailingId)[0];
     $this->time = date('YmdHis', CRM_Utils_Array::value('time', $trigger));
-    $this->hard_bounce = CRM_Utils_Array::value('hard_bounce', $trigger);
-    $this->blocked = CRM_Utils_Array::value('blocked', $trigger);
+    $this->hard_bounce = (int)CRM_Utils_Array::value('hard_bounce', $trigger);
+    $this->blocked = (int)CRM_Utils_Array::value('blocked', $trigger);
     $this->source = CRM_Utils_Array::value('source', $trigger);
     $this->error_related_to = CRM_Utils_Array::value('error_related_to', $trigger);
     $this->error = CRM_Utils_Array::value('error', $trigger);

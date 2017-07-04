@@ -101,7 +101,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($trigger);
             CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
-            return  'HTTP/1.1 422 unknown email address';
+            return 'HTTP/1.1 422 unknown email address';
           }
 
         //we treat bounce, span and blocked as bounce mailing in CiviCRM
@@ -118,7 +118,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($trigger);
             CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
-            return  'HTTP/1.1 422 unknown email address';
+            return 'HTTP/1.1 422 unknown email address';
           }
         # No handler
         default:
@@ -153,14 +153,14 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       'mailing_id' => $message->mailingId,
       'contact_id' => $contactId,
       'email_id' => $emailId,
-      'date_ts' =>  $message->time,
+      'date_ts' => $message->time,
     );
-    $params['hard_bounce'] =  $message->hard_bounce;
+    $params['hard_bounce'] = $message->hard_bounce;
     $params['blocked'] = $message->blocked;
     $params['source'] = $message->source;
-    $params['error_related_to'] =  $message->error_related_to;
-    $params['error'] =   $message->error;
-    $params['job_id'] = (int)$message->job_id;
+    $params['error_related_to'] = $message->error_related_to;
+    $params['error'] = $message->error;
+    $params['job_id'] = $message->job_id;
     $params['email'] = $message->email;
     $params['is_spam'] = !empty($message->source);
 
@@ -201,14 +201,14 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
   }
 
   function prepareDetails(CRM_Mailjet_Logic_Message $message) {
-    return  'Added by mailjet extension, error: '
+    return 'Added by mailjet extension, error: '
       . $message->error_related_to
       . ', '
       . $message->error
       . '. blocked='
-      . (int)$message->blocked
+      . $message->blocked
       . '. hard_bounce='
-      . (int)$message->hard_bounce
+      . $message->hard_bounce
       . ', json=' . $message->message;
   }
 }
