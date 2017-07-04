@@ -68,6 +68,10 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         $this->createBounceActivity($message, $contactId);
       }
 
+      if ($message->event == 'bounce') {
+        $this->setUnreachableActivity($message);
+      }
+
       if ($message->event == 'unsub') {
         $this->setOnHoldHard($emailId, $message->email);
         $this->setOptOut($contactId);
@@ -206,5 +210,17 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       . '. hard_bounce='
       . $message->hard_bounce
       . ', json=' . $message->message;
+  }
+
+
+  function setUnreachableActivity(CRM_Mailjet_Logic_Message $message) {
+    if ($message->activityId) {
+      $params = array(
+        'sequential' => 1,
+        'id' => $message->activityId,
+        'status_id' => 'Unreachable',
+      );
+      civicrm_api3('Activity', 'create', $params);
+    }
   }
 }
