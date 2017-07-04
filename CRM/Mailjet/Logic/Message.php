@@ -13,8 +13,10 @@ class CRM_Mailjet_Logic_Message {
   public $source = '';
   public $error_related_to = '';
   public $error = '';
+  public $message;
 
   function __construct($message) {
+    $this->message = $message;
     $trigger = json_decode($message, true);
     $this->event = trim(CRM_Utils_Array::value('event', $trigger));
     $this->email = str_replace('"', '', trim(CRM_Utils_Array::value('email', $trigger)));
