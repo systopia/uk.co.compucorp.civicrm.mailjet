@@ -50,7 +50,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       return 'HTTP/1.1 422 Not ok';
     }
 
-    if (substr($message->mailingId, 0, 5) === "TRANS" || substr($message->mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
+    if ($message->isTransactional()) {
       $allowedEvents = array('bounce', 'blocked', 'spam', 'unsub');
       if (!in_array($message->event, $allowedEvents)) {
         return 'HTTP/1.1 200 Ok';
@@ -75,7 +75,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       return 'HTTP/1.1 200 Ok';
     }
 
-    if ($message->mailingId && $message->mailingId[0] != '0') { //we only process if mailing_id exist - marketing email
+    if ($message->isMailing()) {
       /* https://www.mailjet.com/docs/event_tracking for more informations. */
       switch ($message->event) {
         //For unsupported events, we just store them raw
@@ -122,9 +122,8 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler for $message->event", true, true);
           return 'HTTP/1.1 422 unknown event';
       }
-    } else { //assumed if there is not mailing_id, this should be a transaction email
-      //TODO::process a transaction email
     }
+
     return 'HTTP/1.1 200 Ok';
   }
 

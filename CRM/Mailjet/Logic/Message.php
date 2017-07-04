@@ -39,4 +39,22 @@ class CRM_Mailjet_Logic_Message {
   public function isValid() {
     return !!$this->event;
   }
+
+  /**
+   * Check if message derived from transaction email.
+   *
+   * @return bool
+   */
+  public function isTransactional() {
+    return (substr($this->mailingId, 0, 5) === "TRANS" || substr($this->mailingId, 0, 15) === "=?utf-8?Q?TRANS");
+  }
+
+  /**
+   * Check if message derived from mass mailing.
+   *
+   * @return bool
+   */
+  public function isMailing() {
+    return ($this->mailingId && $this->mailingId[0] != '0');
+  }
 }
