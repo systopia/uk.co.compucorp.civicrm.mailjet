@@ -15,23 +15,18 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
 
   /**
    * Store a raw event in the mailjet table
+   *
+   * @param \CRM_Mailjet_Logic_Message $message
    */
-  static function createFromPostData($trigger) {
-    $mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
-    $email = trim($trigger['email']);
-    $event = trim($trigger['event']);
-    $mailjetCampaignId = CRM_Utils_Array::value('mj_campaign_id', $trigger);
-    $mailjetContactId = CRM_Utils_Array::value('mj_contact_id' , $trigger);
-    $time = date('YmdHis', $trigger['time']);
-
+  static function createFromPostData(CRM_Mailjet_Logic_Message $message) {
     $mailjetEvent = new CRM_Mailjet_DAO_Event();
-    $mailjetEvent->mailing_id = $mailingId;
-    $mailjetEvent->email = $email;
-    $mailjetEvent->event = $event;
-    $mailjetEvent->mj_campaign_id = $mailjetCampaignId;
-    $mailjetEvent->mj_contact_id = $mailjetContactId;
-    $mailjetEvent->time = $time;
-    $mailjetEvent->data = serialize($trigger);
+    $mailjetEvent->mailing_id = $message->mailingId;
+    $mailjetEvent->email = $message->email;
+    $mailjetEvent->event = $message->event;
+    $mailjetEvent->mj_campaign_id = $message->mailjetCampaignId;
+    $mailjetEvent->mj_contact_id = $message->mailjetContactId;
+    $mailjetEvent->time = $message->time;
+    $mailjetEvent->data = serialize($message->trigger);
     $mailjetEvent->created_date = date('YmdHis');
     $mailjetEvent->save(); 
   }

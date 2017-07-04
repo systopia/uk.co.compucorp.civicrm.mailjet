@@ -50,9 +50,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       return 'HTTP/1.1 422 Not ok';
     }
 
-    //Decode Trigger Informations
-    $trigger = json_decode($msg, true);
-
     if (substr($message->mailingId, 0, 5) === "TRANS" || substr($message->mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
       $allowedEvents = array('bounce', 'blocked', 'spam', 'unsub');
       if (!in_array($message->event, $allowedEvents)) {
@@ -86,7 +83,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         case 'click':
         case 'unsub':
         case 'typofix':
-          CRM_Mailjet_BAO_Event::createFromPostData($trigger);
+          CRM_Mailjet_BAO_Event::createFromPostData($message);
           return 'HTTP/1.1 200 Ok';
 
         //We replace the civi delivery time with the mailjet one
@@ -99,7 +96,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           }
           else {
             //This shouldn't happen, let's log the event
-            CRM_Mailjet_BAO_Event::createFromPostData($trigger);
+            CRM_Mailjet_BAO_Event::createFromPostData($message);
             CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
             return 'HTTP/1.1 422 unknown email address';
           }
@@ -116,7 +113,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           }
           else {
             //This shouldn't happen, let's log the event
-            CRM_Mailjet_BAO_Event::createFromPostData($trigger);
+            CRM_Mailjet_BAO_Event::createFromPostData($message);
             CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
             return 'HTTP/1.1 422 unknown email address';
           }

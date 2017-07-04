@@ -5,19 +5,23 @@ class CRM_Mailjet_Logic_Message {
   public $email = '';
 
   /** @var int|mixed CiviCRM mailing id - is not exactly ID, this is CustomValue */
-  public $mailingId = 0;
+  public $mailingId = '';
   public $job_id = 0;
   public $time = '';
-  public $hard_bounce = '';
-  public $blocked = '';
+  public $mailjetCampaignId = '';
+  public $mailjetContactId = '';
+  public $hard_bounce = 0;
+  public $blocked = 0;
   public $source = '';
   public $error_related_to = '';
   public $error = '';
   public $message;
+  public $trigger;
 
   function __construct($message) {
     $this->message = $message;
     $trigger = json_decode($message, true);
+    $this->trigger = $trigger;
     $this->event = trim(CRM_Utils_Array::value('event', $trigger));
     $this->email = str_replace('"', '', trim(CRM_Utils_Array::value('email', $trigger)));
     $this->mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
@@ -28,6 +32,8 @@ class CRM_Mailjet_Logic_Message {
     $this->source = CRM_Utils_Array::value('source', $trigger);
     $this->error_related_to = CRM_Utils_Array::value('error_related_to', $trigger);
     $this->error = CRM_Utils_Array::value('error', $trigger);
+    $this->mailjetCampaignId = CRM_Utils_Array::value('mj_campaign_id', $trigger);
+    $this->mailjetContactId = CRM_Utils_Array::value('mj_contact_id' , $trigger);
   }
 
   public function isValid() {
