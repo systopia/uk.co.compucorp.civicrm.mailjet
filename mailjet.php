@@ -14,20 +14,17 @@ function mailjet_civicrm_alterMailParams(&$params, $context) {
       $customID = CRM_Mailjet_BAO_Event::getMailjetCustomCampaignId($jobId);
       Civi::cache()->set('mailjet-custom-'. $jobId, $customID);
     }
-    $params['headers']['X-Mailjet-Campaign'] = $customID; //CRM_Mailjet_BAO_Event::getMailjetCustomCampaignId($jobId);
-    $params['headers']['X-Mailjet-CustomValue'] = $customID; //CRM_Mailjet_BAO_Event::getMailjetCustomCampaignId($jobId);
+    $params['headers']['X-Mailjet-Campaign'] = $customID;
+    $params['headers']['X-Mailjet-CustomValue'] = $customID;
     $params['headers']['X-Mailjet-Prio'] = 1; // this has to go batch
   } else {
-    $params['headers']['X-Mailjet-Campaign'] = "TRANS-".$params["from"];
+    $params['headers']['X-Mailjet-Campaign'] = prepareTransactionalCampaign($params);
     $params['headers']['X-Mailjet-CustomValue'] = "TRANS-".time(); // CustomValue have to be unique
     $params['headers']['X-Mailjet-Prio'] = 2; // High priority queue
   }
-
   if (array_key_exists('Subject',$params) && substr($params['Subject'], 0, 16) === "[CiviMail Draft]") {
     $params['headers']['X-Mailjet-Prio'] = 3; // this has to go as fast as possible
   }
-
-
 }
 
 
@@ -177,4 +174,13 @@ function sumUpStats($base, $newStats) {
     }
   }
   return $base;
+}
+
+function prepareTransactionalCampaign($params) {
+  $activityId = CRM_Utils_Array::value('custom-activity-id', $params);
+  $from = CRM_Utils_Array::value('from', $params);
+  if ($activityId) {
+    return 'TRANS-ACTIVITY-' . $activityId;
+  }
+  return 'TRANS-FROM-' . $from;
 }
