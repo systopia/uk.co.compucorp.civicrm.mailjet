@@ -53,38 +53,34 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     //Decode Trigger Informations
     $trigger = json_decode($msg, true);
 
-    $event = trim($trigger['event']);
-    $email = str_replace('"', '', trim($trigger['email']));
-    $mailingId = CRM_Utils_Array::value('customcampaign', $trigger); //CiviCRM mailling ID
-
-    if (substr($mailingId, 0, 5) === "TRANS" || substr($mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
+    if (substr($message->mailingId, 0, 5) === "TRANS" || substr($message->mailingId, 0, 15) === "=?utf-8?Q?TRANS") {
       $allowedEvents = array('bounce', 'blocked', 'spam', 'unsub');
-      if (!in_array($event, $allowedEvents)) {
+      if (!in_array($message->event, $allowedEvents)) {
         return 'HTTP/1.1 200 Ok';
       }
 
-      $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
+      $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
         //we always get the first result
         $emailId = $emailResult['values'][0]['id'];
         $contactId = $emailResult['values'][0]['contact_id'];
 
-        if ($event == 'bounce' && $trigger['hard_bounce']) {
-          $this->setOnHoldHard($emailId, $email);
+        if ($message->event == 'bounce' && $message->hard_bounce) {
+          $this->setOnHoldHard($emailId, $message->email);
         }
         $this->createBounceActivity($trigger, $contactId);
       }
 
-      if ($event == 'unsub') {
-        $this->setOnHoldHard($emailId, $email);
+      if ($message->event == 'unsub') {
+        $this->setOnHoldHard($emailId, $message->email);
         $this->setOptOut($contactId);
       }
       return 'HTTP/1.1 200 Ok';
     }
 
-    if ($mailingId && $mailingId[0] != '0') { //we only process if mailing_id exist - marketing email
+    if ($message->mailingId && $message->mailingId[0] != '0') { //we only process if mailing_id exist - marketing email
       /* https://www.mailjet.com/docs/event_tracking for more informations. */
-      switch ($event) {
+      switch ($message->event) {
         //For unsupported events, we just store them raw
         case 'open':
         case 'click':
@@ -96,7 +92,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         //We replace the civi delivery time with the mailjet one
         //but keep the civi one for comparison
         case 'sent':
-          $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
+          $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
           if (isset($emailResult['values']) && !empty($emailResult['values'])) {
             CRM_Mailjet_Page_EndPoint::updateDelivery($trigger, $emailResult);
             return 'HTTP/1.1 200 Ok';
@@ -104,7 +100,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           else {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($trigger);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email event " . $event, true, true);
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
             return  'HTTP/1.1 422 unknown email address';
           }
 
@@ -112,7 +108,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         case 'bounce':
         case 'spam':
         case 'blocked':
-          $emailResult = civicrm_api3('Email', 'get', array('email' => $email, 'sequential' => 1));
+          $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
           if (isset($emailResult['values']) && !empty($emailResult['values'])) {
             $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($trigger, $emailResult);
             CRM_Mailjet_BAO_Event::recordBounce($params);
@@ -121,12 +117,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           else {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($trigger);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $email event " . $event, true, true);
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
             return  'HTTP/1.1 422 unknown email address';
           }
         # No handler
         default:
-          CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler for $event", true, true);
+          CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler for $message->event", true, true);
           return 'HTTP/1.1 422 unknown event';
       }
     } else { //assumed if there is not mailing_id, this should be a transaction email
