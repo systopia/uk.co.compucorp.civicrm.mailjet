@@ -70,7 +70,7 @@ class CRM_Mailjet_Logic_Message {
    */
   private function setActivityId($trigger) {
     $customCampaign = CRM_Utils_Array::value('customcampaign', $trigger);
-    $re = '/^TRANS-ACTIVITY-([0-9]*)$/';
+    $re = '/TRANS-ACTIVITY-([0-9]*)$/';
     if (preg_match($re, $customCampaign, $matches)) {
       return $matches[1];
     }
