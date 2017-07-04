@@ -149,7 +149,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       'mailing_id' => $message->mailingId,
       'contact_id' => $contactId,
       'email_id' => $emailId,
-      'date_ts' => $message->time,
+      'date_ts' => $message->date_ts,
     );
     $params['hard_bounce'] = $message->hard_bounce;
     $params['blocked'] = $message->blocked;

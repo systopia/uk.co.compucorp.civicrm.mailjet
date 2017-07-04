@@ -8,6 +8,7 @@ class CRM_Mailjet_Logic_Message {
   public $mailingId = '';
   public $job_id = 0;
   public $time = '';
+  public $date_ts = '';
   public $mailjetCampaignId = '';
   public $mailjetContactId = '';
   public $hard_bounce = 0;
@@ -27,6 +28,7 @@ class CRM_Mailjet_Logic_Message {
     $this->mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
     $this->job_id = (int)explode('MJ', $this->mailingId)[0];
     $this->time = date('YmdHis', CRM_Utils_Array::value('time', $trigger));
+    $this->date_ts = CRM_Utils_Array::value('time', $trigger);
     $this->hard_bounce = (int)CRM_Utils_Array::value('hard_bounce', $trigger);
     $this->blocked = (int)CRM_Utils_Array::value('blocked', $trigger);
     $this->source = CRM_Utils_Array::value('source', $trigger);
