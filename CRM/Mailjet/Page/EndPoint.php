@@ -44,14 +44,14 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
 
   function processMessage($msg) {
 
-    //Decode Trigger Informations
-    $trigger = json_decode($msg, true);
-
-    //No Informations sent with the Event
-    if (!is_array($trigger) || !isset($trigger['event'])) {
+    $message = new CRM_Mailjet_Logic_Message($msg);
+    if (!$message->isValid()) {
       CRM_Core_Error::debug_var("ENDPOINT EVENT", "Invalid JSON or no event", true, true);
       return 'HTTP/1.1 422 Not ok';
     }
+
+    //Decode Trigger Informations
+    $trigger = json_decode($msg, true);
 
     $event = trim($trigger['event']);
     $email = str_replace('"', '', trim($trigger['email']));
