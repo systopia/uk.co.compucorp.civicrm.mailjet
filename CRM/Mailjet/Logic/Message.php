@@ -8,6 +8,7 @@ class CRM_Mailjet_Logic_Message {
   public $mailingId = '';
   public $job_id = 0;
   public $activityId = 0;
+  public $campaignId = 0;
   public $time = '';
   public $date_ts = '';
   public $mailjetCampaignId = '';
@@ -28,6 +29,7 @@ class CRM_Mailjet_Logic_Message {
     $this->email = str_replace('"', '', trim(CRM_Utils_Array::value('email', $trigger)));
     $this->mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
     $this->activityId = $this->getActivityId($trigger);
+    $this->campaignId = $this->getCampaignId($trigger);
     $this->job_id = (int)explode('MJ', $this->mailingId)[0];
     $this->time = date('YmdHis', CRM_Utils_Array::value('time', $trigger));
     $this->date_ts = CRM_Utils_Array::value('time', $trigger);
@@ -70,7 +72,22 @@ class CRM_Mailjet_Logic_Message {
    */
   private function getActivityId($trigger) {
     $customCampaign = CRM_Utils_Array::value('customcampaign', $trigger);
-    $re = '/TRANS-ACTIVITY-([0-9]*)$/';
+    $re = '/TRANS-ACTIVITY-([0-9]*)/';
+    if (preg_match($re, $customCampaign, $matches)) {
+      return $matches[1];
+    }
+    return 0;
+  }
+
+  /**
+   * Get campaign id if it's possible
+   * @param array $trigger
+   *
+   * @return int
+   */
+  private function getCampaignId($trigger) {
+    $customCampaign = CRM_Utils_Array::value('customcampaign', $trigger);
+    $re = '/TRANS-.*-CAMPAIGN-([0-9]*)$/';
     if (preg_match($re, $customCampaign, $matches)) {
       return $matches[1];
     }
