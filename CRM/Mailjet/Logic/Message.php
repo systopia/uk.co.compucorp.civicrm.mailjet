@@ -27,7 +27,7 @@ class CRM_Mailjet_Logic_Message {
     $this->event = trim(CRM_Utils_Array::value('event', $trigger));
     $this->email = str_replace('"', '', trim(CRM_Utils_Array::value('email', $trigger)));
     $this->mailingId = CRM_Utils_Array::value('customcampaign', $trigger);
-    $this->activityId = $this->setActivityId($trigger);
+    $this->activityId = $this->getActivityId($trigger);
     $this->job_id = (int)explode('MJ', $this->mailingId)[0];
     $this->time = date('YmdHis', CRM_Utils_Array::value('time', $trigger));
     $this->date_ts = CRM_Utils_Array::value('time', $trigger);
@@ -63,12 +63,12 @@ class CRM_Mailjet_Logic_Message {
   }
 
   /**
-   * Set activity id if it's possible
+   * Get activity id if it's possible
    * @param array $trigger
    *
    * @return int
    */
-  private function setActivityId($trigger) {
+  private function getActivityId($trigger) {
     $customCampaign = CRM_Utils_Array::value('customcampaign', $trigger);
     $re = '/TRANS-ACTIVITY-([0-9]*)$/';
     if (preg_match($re, $customCampaign, $matches)) {
