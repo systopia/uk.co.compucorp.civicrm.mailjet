@@ -177,10 +177,11 @@ function sumUpStats($base, $newStats) {
 }
 
 function prepareTransactionalCampaign($params) {
-  $activityId = CRM_Utils_Array::value('custom-activity-id', $params);
+  $activityId = (int) CRM_Utils_Array::value('custom-activity-id', $params);
+  $campaignId = (int) CRM_Utils_Array::value('custom-campaign-id', $params);
   $from = CRM_Utils_Array::value('from', $params);
-  if ($activityId) {
-    return 'TRANS-ACTIVITY-' . $activityId;
+  if ($activityId || $campaignId) {
+    return 'TRANS-ACTIVITY-' . $activityId . '-CAMPAIGN-' . $campaignId;
   }
   return 'TRANS-FROM-' . $from;
 }
