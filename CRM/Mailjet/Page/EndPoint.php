@@ -198,7 +198,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       'source_contact_id' => $contactId,
     );
     if ($message->campaignId) {
-      $params['campaign'] = $message->campaignId;
+      $params['campaign_id'] = $message->campaignId;
     }
     civicrm_api3('Activity', 'create', $params);
   }
