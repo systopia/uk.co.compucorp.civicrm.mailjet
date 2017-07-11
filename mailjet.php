@@ -20,6 +20,7 @@ function mailjet_civicrm_alterMailParams(&$params, $context) {
   } else {
     $params['headers']['X-Mailjet-Campaign'] = prepareTransactionalCampaign($params);
     $params['headers']['X-Mailjet-CustomValue'] = prepareTransactionalCampaign($params);
+    $params['headers']['X-MJ-EventPayload'] = prepareEventPayload($params);
     $params['headers']['X-Mailjet-Prio'] = 2; // High priority queue
   }
   if (array_key_exists('Subject',$params) && substr($params['Subject'], 0, 16) === "[CiviMail Draft]") {
@@ -184,4 +185,12 @@ function prepareTransactionalCampaign($params) {
     return 'TRANS-ACTIVITY-' . $activityId . '-CAMPAIGN-' . $campaignId;
   }
   return 'TRANS-FROM-' . $from;
+}
+
+function prepareEventPayload($params) {
+  return json_encode([
+    'jobId' => (int) CRM_Utils_Array::value('job_id', $params),
+    'activityId' => (int) CRM_Utils_Array::value('custom-activity-id', $params),
+    'campaignId' => (int) CRM_Utils_Array::value('custom-campaign-id', $params),
+  ]);
 }
