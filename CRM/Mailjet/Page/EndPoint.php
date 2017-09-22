@@ -68,7 +68,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         $this->createBounceActivity($message, $contactId);
       }
 
-      if ($message->event == 'bounce') {
+      if ($message->event == 'bounce' || $message->event == 'blocked') {
         $this->setUnreachableActivity($message);
       }
 
