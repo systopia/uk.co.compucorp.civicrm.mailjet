@@ -57,18 +57,19 @@ $callback = function($msg) {
 
 $connection = connect();
 $channel = $connection->channel();
+$channel->basic_qos(null, MJ_LOAD_CHECK_FREQ, null);
 debug('Waiting for messages. To exit press CTRL+C...');
 while (true) {
   while (count($channel->callbacks)) {
     if ($msg_since_check >= MJ_LOAD_CHECK_FREQ) {
       $load = sys_getloadavg()[MJ_LOAD_INDEX];
       if ($load > MJ_MAX_LOAD) {
-	debug('Cancelling subscription...');
-	$channel->basic_cancel($cb_name);
-	$channel->basic_recover(true);
-	continue;
+        debug('Cancelling subscription...');
+        $channel->basic_cancel($cb_name);
+        $channel->basic_recover(true);
+        continue;
       } else {
-	$msg_since_check = 0;
+        $msg_since_check = 0;
       }
     }
     $channel->wait();
