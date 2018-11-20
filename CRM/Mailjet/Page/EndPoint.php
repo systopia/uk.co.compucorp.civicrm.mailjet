@@ -62,7 +62,10 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         $emailId = $emailResult['values'][0]['id'];
         $contactId = $emailResult['values'][0]['contact_id'];
 
-        if ($message->event == 'bounce' && $message->hard_bounce) {
+        if (
+          ($message->event == 'bounce' && $message->hard_bounce) ||
+          ($message->event == 'spam')
+        ) {
           $this->setOnHoldHard($emailId, $message->email);
         }
         $this->createBounceActivity($message, $contactId);
