@@ -29,11 +29,15 @@ require_once 'CRM/Core/Page.php';
 
 class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
 
-  function run() {
+  /**
+   * @return null|void
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function run() {
     $post = trim(file_get_contents('php://input'));
     if (empty($post)) {
       header('HTTP/1.1 421 No Event');
-      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Needs to be called by mailjet", true, true);
+      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Needs to be called by mailjet", TRUE, TRUE);
       return;
     }
 
@@ -48,11 +52,11 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
    * @return string HTTP STATUS code
    * @throws \CiviCRM_API3_Exception
    */
-  function processMessage($msg) {
+  public function processMessage($msg) {
 
     $message = new CRM_Mailjet_Logic_Message($msg);
     if (!$message->isValid()) {
-      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Invalid JSON or no event", true, true);
+      CRM_Core_Error::debug_var("ENDPOINT EVENT", "Invalid JSON or no event", TRUE, TRUE);
       return 'HTTP/1.1 422 Not ok';
     }
 
@@ -112,7 +116,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           else {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($message);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, TRUE, TRUE);
             return 'HTTP/1.1 422 unknown email address';
           }
 
@@ -131,12 +135,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           else {
             //This shouldn't happen, let's log the event
             CRM_Mailjet_BAO_Event::createFromPostData($message);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, true, true);
+            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, TRUE, TRUE);
             return 'HTTP/1.1 422 unknown email address';
           }
-        # No handler
+
         default:
-          CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler for $message->event", true, true);
+          CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler for $message->event", TRUE, TRUE);
           return 'HTTP/1.1 422 unknown event';
       }
     }
@@ -144,7 +148,11 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     return 'HTTP/1.1 200 Ok';
   }
 
-  function updateDelivery(CRM_Mailjet_Logic_Message $message, $emailId) {
+  /**
+   * @param \CRM_Mailjet_Logic_Message $message
+   * @param $emailId
+   */
+  private function updateDelivery(CRM_Mailjet_Logic_Message $message, $emailId) {
     $query = "UPDATE civicrm_mailing_event_delivered d
               JOIN civicrm_mailing_event_queue q ON d.event_queue_id = q.id
               SET d.mailjet_time_stamp = %3
@@ -157,8 +165,14 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     CRM_Core_DAO::executeQuery($query, $params);
   }
 
-  function prepareBounceParams(CRM_Mailjet_Logic_Message $message, $emailId, $contactId) {
-    //we always get the first result
+  /**
+   * @param \CRM_Mailjet_Logic_Message $message
+   * @param $emailId
+   * @param $contactId
+   *
+   * @return array
+   */
+  private function prepareBounceParams(CRM_Mailjet_Logic_Message $message, $emailId, $contactId) {
     $params = array(
       'mailing_id' => $message->mailingId,
       'contact_id' => $contactId,
@@ -177,7 +191,13 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     return $params;
   }
 
-  function setOnHoldHard($emailId, $email) {
+  /**
+   * @param $emailId
+   * @param $email
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function setOnHoldHard($emailId, $email) {
     $params = array(
       'sequential' => 1,
       'id' => $emailId,
@@ -188,7 +208,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     civicrm_api3('Email', 'create', $params);
   }
 
-  function setOptOut($contactId) {
+  /**
+   * @param $contactId
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function setOptOut($contactId) {
     $params = array(
       'sequential' => 1,
       'id' => $contactId,
@@ -197,7 +222,13 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     civicrm_api3('Contact', 'create', $params);
   }
 
-  function createBounceActivity(CRM_Mailjet_Logic_Message $message, $contactId) {
+  /**
+   * @param \CRM_Mailjet_Logic_Message $message
+   * @param $contactId
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function createBounceActivity(CRM_Mailjet_Logic_Message $message, $contactId) {
     $params = array(
       'sequential' => 1,
       'activity_type_id' => 58, // Bounce
@@ -213,7 +244,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     civicrm_api3('Activity', 'create', $params);
   }
 
-  function prepareDetails(CRM_Mailjet_Logic_Message $message) {
+  /**
+   * @param \CRM_Mailjet_Logic_Message $message
+   *
+   * @return string
+   */
+  private function prepareDetails(CRM_Mailjet_Logic_Message $message) {
     return 'Added by mailjet extension, error: '
       . $message->error_related_to
       . ', '
@@ -225,8 +261,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       . ', json=' . $message->message;
   }
 
-
-  function setUnreachableActivity(CRM_Mailjet_Logic_Message $message) {
+  /**
+   * @param \CRM_Mailjet_Logic_Message $message
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function setUnreachableActivity(CRM_Mailjet_Logic_Message $message) {
     if ($message->activityId) {
       $params = array(
         'sequential' => 1,
@@ -236,4 +276,5 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
       civicrm_api3('Activity', 'create', $params);
     }
   }
+
 }
