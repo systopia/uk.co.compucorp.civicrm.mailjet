@@ -104,7 +104,9 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         case 'sent':
           $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
           if (isset($emailResult['values']) && !empty($emailResult['values'])) {
-            CRM_Mailjet_Page_EndPoint::updateDelivery($message, $emailResult);
+            foreach ($emailResult['values'] as $email) {
+              CRM_Mailjet_Page_EndPoint::updateDelivery($message, $email['id']);
+            }
             return 'HTTP/1.1 200 Ok';
           }
           else {
@@ -120,8 +122,10 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         case 'blocked':
           $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
           if (isset($emailResult['values']) && !empty($emailResult['values'])) {
-            $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($message, $emailResult);
-            CRM_Mailjet_BAO_Event::recordBounce($params);
+            foreach ($emailResult['values'] as $email) {
+              $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($message, $email['id'], $email['contact_id']);
+              CRM_Mailjet_BAO_Event::recordBounce($params);
+            }
             return 'HTTP/1.1 200 Ok';
           }
           else {
@@ -140,24 +144,21 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     return 'HTTP/1.1 200 Ok';
   }
 
-  function updateDelivery(CRM_Mailjet_Logic_Message $message, $emailResult) {
-    $email_id = $emailResult['values'][0]['id'];
+  function updateDelivery(CRM_Mailjet_Logic_Message $message, $emailId) {
     $query = "UPDATE civicrm_mailing_event_delivered d
               JOIN civicrm_mailing_event_queue q ON d.event_queue_id = q.id
               SET d.mailjet_time_stamp = %3
               WHERE q.job_id = %1 AND q.email_id = %2 AND d.mailjet_time_stamp = '1970-01-01'";
     $params = array(
       1 => array($message->job_id, 'Integer'),
-      2 => array($email_id, 'Integer'),
+      2 => array($emailId, 'Integer'),
       3 => array($message->time, 'String'),
     );
     CRM_Core_DAO::executeQuery($query, $params);
   }
 
-  function prepareBounceParams(CRM_Mailjet_Logic_Message $message, $emailResult) {
+  function prepareBounceParams(CRM_Mailjet_Logic_Message $message, $emailId, $contactId) {
     //we always get the first result
-    $contactId = $emailResult['values'][0]['contact_id'];
-    $emailId = $emailResult['values'][0]['id'];
     $params = array(
       'mailing_id' => $message->mailingId,
       'contact_id' => $contactId,
