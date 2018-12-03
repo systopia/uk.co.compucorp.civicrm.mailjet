@@ -42,6 +42,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     CRM_Utils_System::civiExit();
   }
 
+  /**
+   * @param $msg
+   *
+   * @return string HTTP STATUS code
+   * @throws \CiviCRM_API3_Exception
+   */
   function processMessage($msg) {
 
     $message = new CRM_Mailjet_Logic_Message($msg);
@@ -58,27 +64,27 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
 
       $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
-        //we always get the first result
-        $emailId = $emailResult['values'][0]['id'];
-        $contactId = $emailResult['values'][0]['contact_id'];
-
-        if (
-          ($message->event == 'bounce' && $message->hard_bounce) ||
-          ($message->event == 'spam')
-        ) {
-          $this->setOnHoldHard($emailId, $message->email);
+        foreach ($emailResult['values'] as $email) {
+          $emailId = $email['id'];
+          $contactId = $email['contact_id'];
+          $this->createBounceActivity($message, $contactId);
+          if (
+            ($message->event == 'bounce' && $message->hard_bounce) ||
+            ($message->event == 'spam')
+          ) {
+            $this->setOnHoldHard($emailId, $message->email);
+          }
+          if ($message->event == 'unsub') {
+            $this->setOnHoldHard($emailId, $message->email);
+            $this->setOptOut($contactId);
+          }
         }
-        $this->createBounceActivity($message, $contactId);
       }
 
       if ($message->event == 'bounce' || $message->event == 'blocked') {
         $this->setUnreachableActivity($message);
       }
 
-      if ($message->event == 'unsub') {
-        $this->setOnHoldHard($emailId, $message->email);
-        $this->setOptOut($contactId);
-      }
       return 'HTTP/1.1 200 Ok';
     }
 
