@@ -186,7 +186,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $params['error'] = $message->error;
     $params['job_id'] = $message->job_id;
     $params['email'] = $message->email;
-    $params['is_spam'] = !empty($message->source);
+    $params['is_spam'] = ($message->event == 'spam');
 
     return $params;
   }
