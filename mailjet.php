@@ -9,13 +9,14 @@ require_once 'mailjet.civix.php';
 function mailjet_civicrm_alterMailParams(&$params, $context) {
   $jobId = CRM_Utils_Array::value('job_id', $params); //CiviCRM job ID
   if (isset($jobId)) {
-    $customID = Civi::cache()->get('mailjet-custom-'. $jobId);
-    if (!isset($customID)) {
-      $customID = CRM_Mailjet_BAO_Event::getMailjetCampaing($jobId);
-      Civi::cache()->set('mailjet-custom-'. $jobId, $customID);
+    $key = 'mailjet-campaign-'. $jobId;
+    $mailjetCampaign = Civi::cache()->get($key);
+    if (!isset($mailjetCampaign)) {
+      $mailjetCampaign = CRM_Mailjet_BAO_Event::getMailjetCampaign($jobId);
+      Civi::cache()->set($key, $mailjetCampaign);
     }
-    $params['headers']['X-Mailjet-Campaign'] = $customID;
-    $params['headers']['X-Mailjet-CustomValue'] = $customID;
+    $params['headers']['X-Mailjet-Campaign'] = $mailjetCampaign;
+    $params['headers']['X-Mailjet-CustomValue'] = $mailjetCampaign;
     $params['headers']['X-Mailjet-Prio'] = 1; // this has to go batch
   } else {
     $params['headers']['X-Mailjet-Campaign'] = prepareTransactionalCampaign($params);
