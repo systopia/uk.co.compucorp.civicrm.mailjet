@@ -11,7 +11,7 @@ function mailjet_civicrm_alterMailParams(&$params, $context) {
   if (isset($jobId)) {
     $customID = Civi::cache()->get('mailjet-custom-'. $jobId);
     if (!isset($customID)) {
-      $customID = CRM_Mailjet_BAO_Event::getMailjetCustomCampaignId($jobId);
+      $customID = CRM_Mailjet_BAO_Event::getMailjetCampaing($jobId);
       Civi::cache()->set('mailjet-custom-'. $jobId, $customID);
     }
     $params['headers']['X-Mailjet-Campaign'] = $customID;

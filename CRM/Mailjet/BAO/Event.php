@@ -20,6 +20,31 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
   }
 
   /**
+   * @param integer $jobId
+   *
+   * @return string
+   */
+  public static function getMailjetCampaing($jobId) {
+    if ($jobId) {
+      $query = "SELECT CONCAT('ID', m.campaign_id, 'NM', c.name) mailjet_campaign
+                FROM civicrm_mailing_job mj
+                  JOIN civicrm_mailing m ON mj.mailing_id = m.id
+                  JOIN civicrm_campaign c ON m.campaign_id = c.id
+                WHERE mj.id = %1";
+      $params = [
+        1 => [$jobId, 'Integer'],
+      ];
+      $mailjetCampaign = CRM_Core_DAO::singleValueQuery($query, $params);
+      if ($mailjetCampaign) {
+        return $mailjetCampaign;
+      }
+      return $jobId . 'MJ' . strtotime("now");
+    }
+
+    return 0 . 'MJ' . strtotime("now");
+  }
+
+  /**
    * Store a raw event in the mailjet table
    *
    * @param \CRM_Mailjet_Logic_Message $message
