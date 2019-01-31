@@ -18,12 +18,13 @@ function mailjet_civicrm_alterMailParams(&$params, $context) {
     $params['headers']['X-Mailjet-Campaign'] = $mailjetCampaign;
     $params['headers']['X-Mailjet-CustomValue'] = $mailjetCampaign;
     $params['headers']['X-Mailjet-Prio'] = 1; // this has to go batch
-  } else {
+  }
+  else {
     $params['headers']['X-Mailjet-Campaign'] = prepareTransactionalCampaign($params);
     $params['headers']['X-Mailjet-CustomValue'] = prepareTransactionalCampaign($params);
-    $params['headers']['X-MJ-EventPayload'] = prepareEventPayload($params);
     $params['headers']['X-Mailjet-Prio'] = 2; // High priority queue
   }
+  $params['headers']['X-MJ-EventPayload'] = prepareEventPayload($params);
   if (array_key_exists('Subject',$params) && substr($params['Subject'], 0, 16) === "[CiviMail Draft]") {
     $params['headers']['X-Mailjet-Prio'] = 3; // this has to go as fast as possible
   }
