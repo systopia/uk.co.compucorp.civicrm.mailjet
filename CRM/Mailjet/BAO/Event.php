@@ -26,10 +26,9 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
    */
   public static function getMailjetCampaign($jobId) {
     if ($jobId) {
-      $query = "SELECT CONCAT('ID', m.campaign_id, 'NM', c.name) mailjet_campaign
+      $query = "SELECT CONCAT('ID', mj.mailing_id, 'NM', m.name) mailjet_campaign
                 FROM civicrm_mailing_job mj
                   JOIN civicrm_mailing m ON mj.mailing_id = m.id
-                  JOIN civicrm_campaign c ON m.campaign_id = c.id
                 WHERE mj.id = %1";
       $params = [
         1 => [$jobId, 'Integer'],
