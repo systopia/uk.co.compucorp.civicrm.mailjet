@@ -29,13 +29,38 @@ const MJ_LOAD_CHECK_FREQ = 100;
 const MJ_COOLING_PERIOD = 20;
 
 $msg_since_check = 0;
-$arguments = getopt('q:');
+$arguments = getopt('q:e:');
 $queue_name = $arguments['q'];
+$error_queue = $arguments['e'];
 
 function connect() {
   return new AMQPStreamConnection(
     CIVICRM_AMQP_HOST, CIVICRM_AMQP_PORT,
     CIVICRM_AMQP_USER, CIVICRM_AMQP_PASSWORD, CIVICRM_AMQP_VHOST);
+}
+
+/**
+ * If an error queue is defined, send it to that queue through the direct exchange.
+ * Otherwise nack and re-deliver the message to the originating queue.
+ *
+ * @param $msg
+ * @param $error
+ */
+function handleError($msg, $error) {
+  global $error_queue;
+  CRM_Core_Error::debug_var("MAILJET AMQP", $error, TRUE, TRUE);
+  $channel = $msg->delivery_info['channel'];
+
+  if ($error_queue != NULL) {
+    $channel->basic_nack($msg->delivery_info['delivery_tag']);
+    $channel->basic_publish($msg, '', $error_queue);
+  }
+  else {
+    $channel->basic_nack($msg->delivery_info['delivery_tag'], FALSE, TRUE);
+  }
+
+  //In some cases (e.g. a lost connection), dying and respawning can solve the problem
+  die(1);
 }
 
 $callback = function($msg) {
@@ -46,8 +71,8 @@ $callback = function($msg) {
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
   } catch (Exception $ex) {
     $msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag'], false, true);
-    CRM_Core_Error::debug_var("MAILJET AMQP", CRM_Core_Error::formatTextException($ex), true, true);
-    
+    handleError($msg, CRM_Core_Error::formatTextException($ex));
+
     //In some cases (e.g. a lost connection), dying and respawning can solve the problem
     die(1);
   } finally {
