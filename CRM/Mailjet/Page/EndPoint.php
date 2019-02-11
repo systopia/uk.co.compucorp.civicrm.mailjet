@@ -66,7 +66,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         return 'HTTP/1.1 200 Ok';
       }
 
-      $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
+      $emailParams = [
+        'sequential' => 1,
+        'email' => $message->email,
+        'contact_id' => ['IS NOT NULL' => 1],
+      ];
+      $emailResult = civicrm_api3('Email', 'get', $emailParams);
       if (isset($emailResult['values']) && !empty($emailResult['values'])) {
         foreach ($emailResult['values'] as $email) {
           $emailId = $email['id'];
@@ -106,7 +111,11 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         //We replace the civi delivery time with the mailjet one
         //but keep the civi one for comparison
         case 'sent':
-          $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
+          $emailParams = [
+            'sequential' => 1,
+            'email' => $message->email,
+          ];
+          $emailResult = civicrm_api3('Email', 'get', $emailParams);
           if (isset($emailResult['values']) && !empty($emailResult['values'])) {
             foreach ($emailResult['values'] as $email) {
               CRM_Mailjet_Page_EndPoint::updateDelivery($message, $email['id']);
@@ -124,7 +133,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         case 'bounce':
         case 'spam':
         case 'blocked':
-          $emailResult = civicrm_api3('Email', 'get', array('email' => $message->email, 'sequential' => 1));
+          $emailParams = [
+            'sequential' => 1,
+            'email' => $message->email,
+            'contact_id' => ['IS NOT NULL' => 1],
+          ];
+          $emailResult = civicrm_api3('Email', 'get', $emailParams);
           if (isset($emailResult['values']) && !empty($emailResult['values'])) {
             foreach ($emailResult['values'] as $email) {
               $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($message, $email['id'], $email['contact_id']);
