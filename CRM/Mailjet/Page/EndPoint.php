@@ -77,10 +77,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
           $emailId = $email['id'];
           $contactId = $email['contact_id'];
           $this->createBounceActivity($message, $contactId);
-          if ($message->event == 'blocked') {
-            $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($message, $emailId, $contactId);
-            CRM_Mailjet_BAO_Event::recordBounce($params);
-          }
           if (
             ($message->event == 'bounce' && $message->hard_bounce) ||
             ($message->event == 'spam')
