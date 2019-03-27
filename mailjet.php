@@ -36,7 +36,7 @@ function mailjet_civicrm_alterMailParams(&$params, $context) {
  *
  * Handler for pageRun hook.
  */
-function mailjet_civicrm_pageRun(&$page) {
+/* function mailjet_civicrm_pageRun(&$page) {
   if (get_class($page) == 'CRM_Mailing_Page_Report') {
     $mailingId = $page->_mailing_id;
     $mailingJobs = civicrm_api3('MailingJob', 'get', $params = array('mailing_id' => $mailingId));
@@ -86,7 +86,7 @@ function mailjet_civicrm_pageRun(&$page) {
       'template' => 'CRM/Mailjet/Page/Report.tpl',
     ));
   }
-}
+} */
 
 
 
