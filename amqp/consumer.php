@@ -74,7 +74,6 @@ $callback = function($msg) {
     $msg_handler->processMessage($msg->body);
     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
   } catch (Exception $ex) {
-    $msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag'], false, true);
     handleError($msg, CRM_Core_Error::formatTextException($ex));
 
     //In some cases (e.g. a lost connection), dying and respawning can solve the problem
