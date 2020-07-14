@@ -105,7 +105,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         //For unsupported events, we just store them raw
         case 'open':
         case 'click':
-        case 'unsub':
         case 'typofix':
           CRM_Mailjet_BAO_Event::createFromPostData($message);
           return 'HTTP/1.1 200 Ok';
@@ -154,6 +153,21 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, TRUE, TRUE);
             return 'HTTP/1.1 422 unknown email address';
           }
+
+        case 'unsub':
+          CRM_Mailjet_BAO_Event::createFromPostData($message);
+          $emailValues = $this->findEmail($message->email);
+          if ($emailValues) {
+            foreach ($emailValues as $email) {
+              $emailId = $email['id'];
+              $contactId = $email['contact_id'];
+              $this->createBounceActivity($message, $contactId);
+              $this->setOnHoldHard($emailId, $message->email);
+              $this->setOptOut($contactId);
+            }
+          }
+          return 'HTTP/1.1 200 Ok';
+          break;
 
         default:
           CRM_Core_Error::debug_var("MAILJET TRIGGER", "No handler for $message->event", TRUE, TRUE);
