@@ -112,13 +112,9 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         //We replace the civi delivery time with the mailjet one
         //but keep the civi one for comparison
         case 'sent':
-          $emailParams = [
-            'sequential' => 1,
-            'email' => $message->email,
-          ];
-          $emailResult = civicrm_api3('Email', 'get', $emailParams);
-          if (isset($emailResult['values']) && !empty($emailResult['values'])) {
-            foreach ($emailResult['values'] as $email) {
+          $emailValues = $this->findEmail($message->email, FALSE);
+          if ($emailValues) {
+            foreach ($emailValues as $email) {
               CRM_Mailjet_Page_EndPoint::updateDelivery($message, $email['id']);
             }
             return 'HTTP/1.1 200 Ok';
@@ -134,14 +130,9 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         case 'bounce':
         case 'spam':
         case 'blocked':
-          $emailParams = [
-            'sequential' => 1,
-            'email' => $message->email,
-            'contact_id' => ['IS NOT NULL' => 1],
-          ];
-          $emailResult = civicrm_api3('Email', 'get', $emailParams);
-          if (isset($emailResult['values']) && !empty($emailResult['values'])) {
-            foreach ($emailResult['values'] as $email) {
+          $emailValues = $this->findEmail($message->email);
+          if ($emailValues) {
+            foreach ($emailValues as $email) {
               $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($message, $email['id'], $email['contact_id']);
               CRM_Mailjet_BAO_Event::recordBounce($params);
             }
