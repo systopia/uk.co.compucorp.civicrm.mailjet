@@ -66,26 +66,28 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         return 'HTTP/1.1 200 Ok';
       }
 
-      $emailParams = [
-        'sequential' => 1,
-        'email' => $message->email,
-        'contact_id' => ['IS NOT NULL' => 1],
-      ];
-      $emailResult = civicrm_api3('Email', 'get', $emailParams);
-      if (isset($emailResult['values']) && !empty($emailResult['values'])) {
-        foreach ($emailResult['values'] as $email) {
+      $emailValues = $this->findEmail($message->email);
+      if ($emailValues) {
+        foreach ($emailValues as $email) {
           $emailId = $email['id'];
           $contactId = $email['contact_id'];
           $this->createBounceActivity($message, $contactId);
-          if (
-            ($message->event == 'bounce' && $message->hard_bounce) ||
-            ($message->event == 'spam')
-          ) {
-            $this->setOnHoldHard($emailId, $message->email);
-          }
-          if ($message->event == 'unsub') {
-            $this->setOnHoldHard($emailId, $message->email);
-            $this->setOptOut($contactId);
+          switch ($message->event) {
+            case 'bounce':
+              if ($message->hard_bounce) {
+                $this->setOnHoldHard($emailId, $message->email);
+              }
+              // fixme what with else?
+              break;
+
+            case 'spam':
+              $this->setOnHoldHard($emailId, $message->email);
+              break;
+
+            case 'unsub':
+              $this->setOnHoldHard($emailId, $message->email);
+              $this->setOptOut($contactId);
+              break;
           }
         }
       }
@@ -203,6 +205,26 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $params['is_spam'] = ($message->event == 'spam');
 
     return $params;
+  }
+
+  /**
+   * @param string $email
+   * @param bool $contactIdIsNotNull
+   *
+   * @return mixed
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function findEmail($email, $contactIdIsNotNull = TRUE) {
+    $emailParams = [
+      'sequential' => 1,
+      'email' => $email,
+    ];
+    if ($contactIdIsNotNull) {
+      $emailParams['contact_id'] = ['IS NOT NULL' => 1];
+    }
+    $emailResult = civicrm_api3('Email', 'get', $emailParams);
+
+    return $emailResult['values'];
   }
 
   /**
