@@ -117,14 +117,11 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             foreach ($emailValues as $email) {
               CRM_Mailjet_Page_EndPoint::updateDelivery($message, $email['id']);
             }
-            return 'HTTP/1.1 200 Ok';
           }
           else {
-            //This shouldn't happen, let's log the event
-            CRM_Mailjet_BAO_Event::createFromPostData($message);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, TRUE, TRUE);
-            return 'HTTP/1.1 422 unknown email address';
+            $this->logUnkownAddress($message);
           }
+          return 'HTTP/1.1 200 Ok';
 
         //we treat bounce, span and blocked as bounce mailing in CiviCRM
         case 'bounce':
@@ -136,14 +133,11 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
               $params = CRM_Mailjet_Page_EndPoint::prepareBounceParams($message, $email['id'], $email['contact_id']);
               CRM_Mailjet_BAO_Event::recordBounce($params);
             }
-            return 'HTTP/1.1 200 Ok';
           }
           else {
-            //This shouldn't happen, let's log the event
-            CRM_Mailjet_BAO_Event::createFromPostData($message);
-            CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, TRUE, TRUE);
-            return 'HTTP/1.1 422 unknown email address';
+            $this->logUnkownAddress($message);
           }
+          return 'HTTP/1.1 200 Ok';
 
         case 'unsub':
           CRM_Mailjet_BAO_Event::createFromPostData($message);
@@ -157,6 +151,9 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
               $this->setOptOut($contactId);
             }
           }
+          else {
+            $this->logUnkownAddress($message);
+          }
           return 'HTTP/1.1 200 Ok';
           break;
 
@@ -167,6 +164,12 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     }
 
     return 'HTTP/1.1 200 Ok';
+  }
+
+  private function logUnkownAddress($message) {
+    //This shouldn't happen, let's log the event
+    CRM_Mailjet_BAO_Event::createFromPostData($message);
+    CRM_Core_Error::debug_var("MAILJET TRIGGER", "Unknown address $message->email event " . $message->event, TRUE, TRUE);
   }
 
   /**
