@@ -190,9 +190,16 @@ function prepareTransactionalCampaign($params) {
 }
 
 function prepareEventPayload($params) {
-  return json_encode([
-    'jobId' => (int) CRM_Utils_Array::value('job_id', $params),
-    'activityId' => (int) CRM_Utils_Array::value('custom-activity-id', $params),
-    'campaignId' => (int) CRM_Utils_Array::value('custom-campaign-id', $params),
-  ]);
+  $current_payload = [];
+  if (isset($params['headers']['X-MJ-EventPayload'])) {
+    // decode current payload
+    $current_payload = json_decode($params['headers']['X-MJ-EventPayload'], TRUE);
+  }
+  // add Event Payload
+  $current_payload['jobId'] = (int) CRM_Utils_Array::value('job_id', $params);
+  $current_payload['activityId'] = (int) CRM_Utils_Array::value('custom-activity-id', $params);
+  $current_payload['campaignId'] = (int) CRM_Utils_Array::value('custom-campaign-id', $params);
+  // return merged payload
+  return json_encode($current_payload);
 }
+
