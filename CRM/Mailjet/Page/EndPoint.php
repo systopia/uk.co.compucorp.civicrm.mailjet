@@ -234,6 +234,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
     $emailParams = [
       'sequential' => 1,
       'email' => $email,
+      'is_billing' => 0,
     ];
     if ($contactIdIsNotNull) {
       $emailParams['contact_id'] = ['IS NOT NULL' => 1];
