@@ -75,9 +75,9 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
         foreach ($emailValues as $email) {
           $emailId = $email['id'];
           $contactId = $email['contact_id'];
-          $this->createBounceActivity($message, $contactId);
           switch ($message->event) {
             case 'bounce':
+              $this->createBounceActivity($message, $contactId);
               if ($message->hard_bounce) {
                 $this->setOnHoldHard($emailId, $message->email);
               }
@@ -85,6 +85,7 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
               break;
 
             case 'spam':
+              $this->createBounceActivity($message, $contactId);
               $this->setOnHoldHard($emailId, $message->email);
               break;
 
@@ -154,7 +155,6 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             foreach ($emailValues as $email) {
               $emailId = $email['id'];
               $contactId = $email['contact_id'];
-              $this->createBounceActivity($message, $contactId);
               $this->setOnHoldHard($emailId, $message->email);
               $this->setOptOut($contactId);
             }
