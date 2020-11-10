@@ -80,6 +80,8 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
               $this->createBounceActivity($message, $contactId);
               if ($message->hard_bounce) {
                 $this->setOnHoldHard($emailId, $message->email);
+                // shouldn't also set as is_opt_out? the same as on unsub event type
+                // $this->setOptOut($contactId);
               }
               // fixme what with else?
               break;
@@ -87,6 +89,8 @@ class CRM_Mailjet_Page_EndPoint extends CRM_Core_Page {
             case 'spam':
               $this->createBounceActivity($message, $contactId);
               $this->setOnHoldHard($emailId, $message->email);
+              // shouldn't also set as is_opt_out? the same as on unsub event type
+              // $this->setOptOut($contactId);
               break;
 
             case 'unsub':
