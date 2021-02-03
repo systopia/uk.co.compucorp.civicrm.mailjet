@@ -24,7 +24,7 @@ class CRM_Mailjet_Hooks {
       return CRM_Utils_Hook::singleton()->invoke(3, $bounce_message, self::$null, self::$null, self::$null, self::$null, 'civicrm_mailjet_transactional_event');
     }
     else {
-      return CRM_Utils_Hook::singleton()->invoke(3, $bounce_message, self::$null, self::$null, self::$null, self::$null, self::$null, 'civicrm_mailjet_transactional_event');
+      return CRM_Utils_Hook::singleton()->invoke(['bounce_message'], $bounce_message, self::$null, self::$null, self::$null, self::$null, self::$null, 'civicrm_mailjet_transactional_event');
     }
   }
 
@@ -39,7 +39,7 @@ class CRM_Mailjet_Hooks {
       return CRM_Utils_Hook::singleton()->invoke(3, $bounce_message, self::$null, self::$null, self::$null, self::$null, 'civicrm_mailjet_mailing_event');
     }
     else {
-      return CRM_Utils_Hook::singleton()->invoke(3, $bounce_message, self::$null, self::$null, self::$null, self::$null, self::$null, 'civicrm_mailjet_mailing_event');
+      return CRM_Utils_Hook::singleton()->invoke(['bounce_message'], $bounce_message, self::$null, self::$null, self::$null, self::$null, self::$null, 'civicrm_mailjet_mailing_event');
     }
   }
 }
