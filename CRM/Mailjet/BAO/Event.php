@@ -82,34 +82,39 @@ class CRM_Mailjet_BAO_Event extends CRM_Mailjet_DAO_Event {
     $bounceType = array();
     // fixme deprecated function
     CRM_Core_PseudoConstant::populate($bounceType, 'CRM_Mailing_DAO_BounceType', TRUE, 'id', NULL, NULL, NULL, 'name');
-    $bounce = new CRM_Mailing_Event_BAO_Bounce();
-    $bounce->time_stamp = $time;
-    $bounce->event_queue_id = $eventQueue->id;
     if ($isSpam) {
-      $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::SPAM];
-      $bounce->bounce_reason = CRM_Utils_Array::value('source', $params); //bounce reason when spam occured
+      $bounceTypeId = $bounceType[CRM_Mailjet_Upgrader::SPAM];
+      $bounceReason = CRM_Utils_Array::value('source', $params); //bounce reason when spam occured
     }
     else {
       $hardBounce = CRM_Utils_Array::value('hard_bounce', $params);
       $blocked = CRM_Utils_Array::value('blocked', $params); //  blocked : true if this bounce leads to recipient being blocked
       if ($hardBounce && $blocked) {
-        $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::BLOCKED];
+        $bounceTypeId = $bounceType[CRM_Mailjet_Upgrader::BLOCKED];
       }
       elseif ($hardBounce && !$blocked) {
-        $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::HARD_BOUNCE];
+        $bounceTypeId = $bounceType[CRM_Mailjet_Upgrader::HARD_BOUNCE];
       }
       else {
         if (self::isHardError($params)) {
-          $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::HARD_BOUNCE];
+          $bounceTypeId = $bounceType[CRM_Mailjet_Upgrader::HARD_BOUNCE];
         }
         else {
-          $bounce->bounce_type_id = $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE];
+          $bounceTypeId = $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE];
         }
       }
-      $bounce->bounce_reason = $params['error_related_to'] . " - " . $params['error'];
+      $bounceReason = $params['error_related_to'] . " - " . $params['error'];
     }
-    $bounce->save();
-    if ($bounce->bounce_type_id != $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE]) {
+    $bounceParams = [
+      'job_id' => $jobId,
+      'event_queue_id' => $eventQueue->id,
+      'hash' => $eventQueue->hash,
+      'time_stamp' => $time,
+      'bounce_type_id' => $bounceTypeId,
+      'bounce_reason' => $bounceReason,
+    ];
+    CRM_Mailing_Event_BAO_Bounce::create($bounceParams);
+    if ($bounceTypeId != $bounceType[CRM_Mailjet_Upgrader::SOFT_BOUNCE]) {
       $params = array(
         'id' => $contactId,
         'do_not_email' => 1,
