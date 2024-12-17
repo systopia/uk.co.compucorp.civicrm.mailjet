@@ -30,7 +30,6 @@ function mailjet_civicrm_alterMailParams(&$params, $context) {
   }
 }
 
-
 /**
  * Implementation of hook_civicrm_pageRun
  *
@@ -98,27 +97,10 @@ function mailjet_civicrm_config(&$config) {
 }
 
 /**
- * Implementation of hook_civicrm_xmlMenu
- *
- * @param $files array(string)
- */
-function mailjet_civicrm_xmlMenu(&$files) {
-  _mailjet_civix_civicrm_xmlMenu($files);
-}
-
-/**
  * Implementation of hook_civicrm_install
  */
 function mailjet_civicrm_install() {
   return _mailjet_civix_civicrm_install();
-}
-
-/**
- * Implementation of hook_civicrm_uninstall
- */
-function mailjet_civicrm_uninstall() {
-
-  return _mailjet_civix_civicrm_uninstall();
 }
 
 /**
@@ -127,37 +109,6 @@ function mailjet_civicrm_uninstall() {
 function mailjet_civicrm_enable() {
   return _mailjet_civix_civicrm_enable();
 }
-
-/**
- * Implementation of hook_civicrm_disable
- */
-function mailjet_civicrm_disable() {
-  return _mailjet_civix_civicrm_disable();
-}
-
-/**
- * Implementation of hook_civicrm_upgrade
- *
- * @param $op string, the type of operation being performed; 'check' or 'enqueue'
- * @param $queue CRM_Queue_Queue, (for 'enqueue') the modifiable list of pending up upgrade tasks
- *
- * @return mixed  based on op. for 'check', returns array(boolean) (TRUE if upgrades are pending)
- *                for 'enqueue', returns void
- */
-function mailjet_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
-  return _mailjet_civix_civicrm_upgrade($op, $queue);
-}
-
-/**
- * Implementation of hook_civicrm_managed
- *
- * Generate a list of entities to create/deactivate/delete when this module
- * is installed, disabled, uninstalled.
- */
-function mailjet_civicrm_managed(&$entities) {
-  return _mailjet_civix_civicrm_managed($entities);
-}
-
 
 function sumUpStats($base, $newStats) {
   $keys = array(
@@ -202,4 +153,3 @@ function prepareEventPayload($params) {
   // return merged payload
   return json_encode($current_payload);
 }
-
